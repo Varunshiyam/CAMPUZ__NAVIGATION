@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Campus Buildings</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- 1. Global Reset & Variables --- */
+        :root {
+            --bg-body: #000000;
+            --bg-element: #121212; /* Matches Home Header */
+            --bg-card: #333333;
+            --text-main: #ffffff;
+            --text-sub: #8e8e93;
+            
+            /* Home Page Theme Colors */
+            --accent-gold: #d4af37;
+            --accent-gold-dark: #c5a028;
+            --accent-blue: #3B82F6; /* Middle Button */
+            
+            --status-green: #30d158;
+            --status-red: #ff453a;
+            
+            --nav-height: 70px;
+            --border-color: #2c2c2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 2. App Container (Matches Home) --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: var(--bg-element);
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- 3. Header Section --- */
+        .header-section {
+            background-color: var(--bg-element);
+            padding: 16px 16px 10px 16px;
+            z-index: 20;
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+
+        .search-container {
+            background-color: #ffffff;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 16px;
+        }
+
+        .search-container i {
+            color: #000;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .search-input {
+            background: transparent;
+            border: none;
+            color: #333;
+            width: 100%;
+            outline: none;
+            font-size: 16px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- 4. Category Chips (Matches Home Style) --- */
+        .categories-container {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+            scroll-behavior: smooth;
+        }
+        .categories-container::-webkit-scrollbar { display: none; }
+
+        .chip {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: #222;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chip:active { transform: scale(0.95); }
+        
+        /* Gold Active State to Match Home */
+        .chip.active {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+            color: black;
+            border-color: transparent;
+        }
+
+        /* --- 5. The Building List --- */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #000; /* Deep black body */
+            padding-bottom: 90px; /* Space for nav */
+            padding-top: 10px;
+        }
+
+        .list-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #222;
+            background-color: #000;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .list-row:active {
+            background-color: #1a1a1a;
+        }
+
+        .row-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-right: 15px;
+            filter: brightness(0.85);
+            background: #333;
+            border: 1px solid #333;
+        }
+
+        .row-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .row-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .row-status {
+            font-size: 12px;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .status-indicator.open { background-color: var(--status-green); box-shadow: 0 0 5px rgba(48, 209, 88, 0.4); }
+        .status-indicator.closed { background-color: var(--status-red); }
+
+        .row-arrow {
+            color: #444;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- 6. Bottom Navigation (Exact Copy of Home.html) --- */
+        .bottom-nav {
+            position: absolute; 
+            bottom: 0; 
+            width: 100%;
+            background: rgba(25, 25, 25, 0.95); 
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #333; 
+            display: flex; 
+            justify-content: space-around;
+            align-items: center; 
+            padding: 10px 0; 
+            z-index: 50;
+        }
+
+        .nav-item {
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            color: #888; 
+            font-size: 10px; 
+            gap: 4px; 
+            cursor: pointer; 
+            width: 60px;
+            text-decoration: none;
+        }
+
+        .nav-item i { 
+            font-size: 20px; 
+            margin-bottom: 2px; 
+        }
+
+        /* Active State is White for text/icon */
+        .nav-item.active { color: #ffffff; }
+        
+        /* Middle Button Styling */
+        .nav-item.middle { position: relative; top: -20px; }
+        .middle-icon {
+            width: 56px; height: 56px; 
+            background: var(--accent-blue); 
+            border-radius: 50%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5); 
+            border: 4px solid #121212;
+        }
+        .middle-icon i { font-size: 24px; color: white; margin: 0; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- Header -->
+    <div class="header-section">
+        <h1 class="page-title">Campus Buildings</h1>
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search blocks, labs, etc...">
+        </div>
+        
+        <div class="categories-container" id="categoryChips">
+            <div class="chip active" data-filter="all">All</div>
+            <div class="chip" data-filter="open">Open Now</div>
+            <div class="chip" data-filter="block"><i class="fa-regular fa-building"></i> Blocks</div>
+            <div class="chip" data-filter="lab"><i class="fa-solid fa-flask"></i> Labs</div>
+            <div class="chip" data-filter="hall"><i class="fa-solid fa-landmark"></i> Halls</div>
+            <div class="chip" data-filter="food"><i class="fa-solid fa-utensils"></i> Food</div>
+            <div class="chip" data-filter="sport"><i class="fa-solid fa-futbol"></i> Sports</div>
+        </div>
+    </div>
+
+    <!-- Building List -->
+    <div class="list-container" id="buildingList">
+        
+        <div class="list-row" data-category="block"><img src="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Main Block (A)</div><div class="row-status" data-opens="8" data-closes="17" data-default="Opens 8 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="block"><img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Block B</div><div class="row-status" data-opens="8" data-closes="17" data-default="Opens 8 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="block"><img src="https://images.unsplash.com/photo-1554469384-e58fac16e23a?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Block C</div><div class="row-status" data-opens="8" data-closes="17" data-default="Opens 8 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="block"><img src="https://images.unsplash.com/photo-1590579491624-f98f36d4c763?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Block D</div><div class="row-status" data-opens="8" data-closes="17" data-default="Opens 8 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+        <div class="list-row" data-category="hall"><img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Academic Hall</div><div class="row-status" data-opens="8" data-closes="17" data-default="Event Scheduled"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="hall"><img src="https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Seminar Hall</div><div class="row-status" data-opens="9" data-closes="17" data-default="Currently Closed"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="hall"><img src="https://images.unsplash.com/photo-1505373877841-8d43f7d38730?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Auditorium</div><div class="row-status" data-opens="9" data-closes="17" data-default="Currently Closed"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+        <div class="list-row" data-category="food"><img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Food Court</div><div class="row-status" data-opens="7" data-closes="21" data-default="Closes 9 PM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="food"><img src="https://images.unsplash.com/photo-1574169208538-4f4fd0543523?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Snacks Box</div><div class="row-status" data-opens="10" data-closes="18" data-default="Closes 6 PM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+        <div class="list-row" data-category="hostel"><img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Girls Hostel</div><div class="row-status">Restricted Access</div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="hostel"><img src="https://images.unsplash.com/photo-1596276020587-8044fe049813?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Boys Hostel</div><div class="row-status">Restricted Access</div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+        <div class="list-row" data-category="sport"><img src="https://images.unsplash.com/photo-1626248982823-37f268b643a6?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Volleyball Court</div><div class="row-status" data-opens="0" data-closes="24" data-default="Always Open"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="sport"><img src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Football Court</div><div class="row-status" data-opens="0" data-closes="24" data-default="Always Open"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+        <div class="list-row" data-category="lab"><img src="https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Concrete Lab</div><div class="row-status" data-opens="9" data-closes="16" data-default="Opens 9 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="lab"><img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Chemistry Lab</div><div class="row-status" data-opens="9" data-closes="16" data-default="Opens 9 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+        <div class="list-row" data-category="lab"><img src="https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=100&q=60" class="row-img"><div class="row-info"><div class="row-title">Physics Lab</div><div class="row-status" data-opens="9" data-closes="16" data-default="Opens 9 AM"></div></div><i class="fa-solid fa-chevron-right row-arrow"></i></div>
+
+    </div>
+
+    <!-- Bottom Nav (Matching Home.html) -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-house"></i><span>Home</span>
+        </a>
+        <!-- Active class on Building -->
+        <a href="#" class="nav-item active">
+            <i class="fa-regular fa-building"></i><span>Building</span>
+        </a>
+        <div class="nav-item middle">
+            <div class="middle-icon"><i class="fa-solid fa-bars"></i></div>
+        </div>
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-shapes"></i><span>Category</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-regular fa-map"></i><span>Gate</span>
+        </a>
+    </nav>
+
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const rows = document.querySelectorAll('.list-row');
+    const chips = document.querySelectorAll('.chip');
+
+    // --- FEATURE 1: REAL-TIME STATUS LOGIC ---
+    function updateStatus() {
+        const now = new Date();
+        const currentHour = now.getHours();
+
+        rows.forEach(row => {
+            const statusElement = row.querySelector('.row-status');
+            
+            // Skip if status is static (like Hostels)
+            if (!statusElement.hasAttribute('data-opens')) return;
+
+            const opens = parseInt(statusElement.getAttribute('data-opens'));
+            const closes = parseInt(statusElement.getAttribute('data-closes'));
+            const defaultText = statusElement.getAttribute('data-default');
+            
+            let isOpen = false;
+            
+            // Check if currently open (inclusive of start, exclusive of end)
+            if (opens <= closes) {
+                isOpen = currentHour >= opens && currentHour < closes;
+            } else {
+                // Handles 24-hour periods
+                isOpen = currentHour >= opens || currentHour < closes;
+            }
+
+            // Construct new status HTML with indicator
+            let statusHtml = '';
+            if (isOpen) {
+                statusHtml = `<div class="status-indicator open"></div> Open · ${defaultText}`;
+                row.setAttribute('data-status', 'open');
+            } else {
+                statusHtml = `<div class="status-indicator closed"></div> Closed · ${defaultText}`;
+                row.setAttribute('data-status', 'closed');
+            }
+            statusElement.innerHTML = statusHtml;
+        });
+    }
+
+    // --- FEATURE 3: CHIP FILTERING LOGIC ---
+    function filterList(filter) {
+        chips.forEach(chip => chip.classList.remove('active'));
+        document.querySelector(`.chip[data-filter="${filter}"]`).classList.add('active');
+        searchInput.value = ''; // Clear search when filtering by chip
+
+        rows.forEach(row => {
+            const category = row.getAttribute('data-category');
+            const status = row.getAttribute('data-status'); // Used for 'Open Now' filter
+
+            let isVisible = true;
+
+            if (filter !== 'all') {
+                if (filter === 'open') {
+                    isVisible = (status === 'open');
+                } else {
+                    isVisible = (category === filter);
+                }
+            }
+
+            if (isVisible) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+
+    chips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            // Handle clicking the icon or the div
+            const target = e.target.closest('.chip');
+            const filter = target.getAttribute('data-filter');
+            filterList(filter);
+        });
+    });
+
+    // --- SEARCH LOGIC ---
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        
+        // If searching, reset chip to 'All'
+        if (term) {
+            document.querySelector('.chip.active').classList.remove('active');
+            document.querySelector('.chip[data-filter="all"]').classList.add('active');
+        }
+
+        rows.forEach(row => {
+            const title = row.querySelector('.row-title').textContent.toLowerCase();
+            if(title.includes(term)) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    });
+
+    // Initialize features on load
+    updateStatus();
+    // Update status every 60 seconds
+    setInterval(updateStatus, 60000); 
+</script>
+</body>
+</html>
