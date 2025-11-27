@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KCE Route Master Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; }
+    #map { width: 100%; height: 100%; z-index: 1; }
+    
+    /* --- PANELS --- */
+    .panel {
+        position: absolute;
+        top: 10px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        width: 260px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+    }
+    
+    /* Left Panel - Testing */
+    #left-panel { left: 10px; }
+    /* Right Panel - Editing */
+    #right-panel { right: 10px; }
+
+    h3 { margin: 0 0 10px 0; font-size: 16px; border-bottom: 2px solid #007bff; padding-bottom: 5px; color: #333; }
+    h4 { margin: 10px 0 5px 0; font-size: 14px; color: #555; border-bottom: 1px solid #eee;}
+
+    /* UI Elements */
+    .status-row { margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .label { font-weight: bold; color: #666; }
+    .value { font-weight: bold; color: #000; }
+    #route-text { 
+        margin-top: 10px; 
+        padding: 8px; 
+        background: #f8f9fa; 
+        border: 1px solid #eee; 
+        border-radius: 4px; 
+        font-family: monospace; 
+        font-size: 11px; 
+        white-space: pre-wrap; 
+        max-height: 100px; 
+        overflow-y: auto;
+    }
+
+    /* Buttons */
+    button {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+    .btn-mode { background: #6c757d; color: white; margin-bottom: 10px; }
+    .btn-mode.active { background: #007bff; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
+    
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-warning:hover { background: #e0a800; }
+
+    /* Toggle Switch Container */
+    .mode-switch { display: flex; gap: 5px; margin-bottom: 10px; }
+    
+    /* Output Area */
+    #output-area { display: none; margin-top: 10px; }
+    textarea { width: 100%; height: 150px; font-size: 10px; font-family: monospace; border: 1px solid #ccc; }
+
+    /* Map Styles */
+    .node-marker {
+        background-color: #007bff;
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(0,0,0,0.4);
+        transition: transform 0.1s;
+    }
+    .node-marker:hover { transform: scale(1.2); }
+    
+    /* States */
+    .marker-start { background-color: #28a745 !important; transform: scale(1.3); z-index: 500; }
+    .marker-end { background-color: #dc3545 !important; transform: scale(1.3); z-index: 500; }
+    .marker-selected { background-color: #ffc107 !important; border-color: #333 !important; transform: scale(1.3); z-index: 500; }
+
+    .direction-icon {
+        display: flex; justify-content: center; align-items: center;
+        font-size: 14px; color: red; font-weight: bold;
+        text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT PANEL: TESTING -->
+  <div id="left-panel" class="panel">
+      <h3>🚀 Path Tester</h3>
+      <div class="status-row"><span class="label">Start:</span> <span id="lbl-start" class="value">-</span></div>
+      <div class="status-row"><span class="label">End:</span> <span id="lbl-end" class="value">-</span></div>
+      <div class="status-row"><span class="label">Dist:</span> <span id="lbl-dist" class="value">0 m</span></div>
+      
+      <h4>Route Sequence:</h4>
+      <div id="route-text">Select nodes to see path...</div>
+      <button onclick="resetTest()" class="btn-warning" style="margin-top:10px;">Reset Test</button>
+  </div>
+
+  <!-- RIGHT PANEL: EDITING -->
+  <div id="right-panel" class="panel">
+      <h3>🛠️ Map Editor</h3>
+      
+      <div class="mode-switch">
+          <button id="btn-mode-test" class="btn-mode active" onclick="setMode('test')">Test Mode</button>
+          <button id="btn-mode-edit" class="btn-mode" onclick="setMode('edit')">Edit Mode</button>
+      </div>
+
+      <div id="edit-controls" style="display:none;">
+          <div style="background:#fff3cd; padding:8px; border-radius:4px; margin-bottom:10px; color:#856404;">
+              <b>Edit Mode Active:</b><br>
+              • Click Map -> Add Node<br>
+              • Drag Node -> Move<br>
+              • Click A then B -> Connect/Select
+          </div>
+          
+          <div class="status-row"><span class="label">Selection 1:</span> <span id="sel-1" class="value">-</span></div>
+          <div class="status-row"><span class="label">Selection 2:</span> <span id="sel-2" class="value">-</span></div>
+
+          <button onclick="deleteSelectedNode()" class="btn-danger">Delete Node (Sel 1)</button>
+          <button onclick="deleteConnection()" class="btn-danger">Delete Connection (1-2)</button>
+      </div>
+
+      <hr>
+      <button onclick="exportData()" class="btn-success">Generate Updated Code</button>
+      
+      <div id="output-area">
+          <textarea id="code-output" readonly></textarea>
+          <button onclick="document.getElementById('output-area').style.display='none'" style="background:#666; color:white;">Close</button>
+      </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+    // --- GLOBAL VARIABLES ---
+    let map;
+    let polylineLayer;
+    let markers = {}; // Store marker objects by name
+    let nodes = {};
+    let adjacency = {};
+    
+    // App State
+    let currentMode = 'test'; // 'test' or 'edit'
+    
+    // Test Mode State
+    let testStart = null;
+    let testEnd = null;
+    let testPathLine = null;
+
+    // Edit Mode State
+    let editSel1 = null;
+    let editSel2 = null;
+
+    window.onload = function () {
+      try {
+        initMap();
+        loadData();
+        renderMap();
+      } catch (err) { 
+        console.error(err); 
+        alert("Error initializing: " + err); 
+      }
+    };
+
+    function initMap() {
+        map = L.map("map").setView([10.8795, 77.0213], 17);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22 }).addTo(map);
+        polylineLayer = L.layerGroup().addTo(map);
+
+        // Map Click Event (For Adding Nodes in Edit Mode)
+        map.on('click', function(e) {
+            if (currentMode === 'edit') {
+                // If we have selections, clear them first to avoid confusion
+                if (editSel1 || editSel2) {
+                    clearEditSelection();
+                    return;
+                }
+                const name = prompt("Enter Name for New Node:");
+                if (name) {
+                    if (nodes[name]) { alert("Name already exists!"); return; }
+                    // Add Node
+                    nodes[name] = { lat: e.latlng.lat, lon: e.latlng.lng };
+                    adjacency[name] = []; // Init adjacency
+                    renderMap(); // Redraw
+                }
+            }
+        });
+    }
+
+    function loadData() {
+        // --- MERGED NODES ---
+        nodes = {
+          // 1. High Priority Data (Code 1)
+          "EX12": { "lat": 10.880059102484713, "lon": 77.01834708452226 },
+          "EX11": { "lat": 10.88014339030873, "lon": 77.0187360048294 },
+          "EX10": { "lat": 10.88021845913193, "lon": 77.01908200979234 },
+          "EX9": { "lat": 10.880276406982512, "lon": 77.0193435251713 },
+          "EX8": { "lat": 10.880038030525, "lon": 77.01941326260568 },
+          "EX7": { "lat": 10.879887892768833, "lon": 77.0194534957409 },
+          "EX6": { "lat": 10.879711414958763, "lon": 77.01949506998064 },
+          "EX5": { "lat": 10.87946250204905, "lon": 77.01956883072855 },
+          "EX4": { "lat": 10.879274170979256, "lon": 77.01960772275926 },
+          "EX3": { "lat": 10.879155640874329, "lon": 77.01960772275926 },
+          "EX2": { "lat": 10.878836926358446, "lon": 77.01962247490884 },
+          "EX1": { "lat": 10.878603215574085, "lon": 77.01963670373154 },
+          "BH4": { "lat": 10.878447093264196, "lon": 77.0190779864788 },
+          "BH3": { "lat": 10.878439191236737, "lon": 77.01962381601335 },
+          "TurfGround": { "lat": 10.879575764033733, "lon": 77.01934218406679 },
+          "BH2": { "lat": 10.8782930036911, "lon": 77.0197592675686 },
+          "BH1": { "lat": 10.8781454990679, "lon": 77.0198705792427 },
+          "AH6": { "lat": 10.878150767091418, "lon": 77.02006235718729 },
+          "AH5": { "lat": 10.878020383482092, "lon": 77.02007979154587 },
+          "AH4": { "lat": 10.877853123616946, "lon": 77.02010259032251 },
+          "AH3": { "lat": 10.877670059562497, "lon": 77.02011331915857 },
+          "AH1": { "lat": 10.877660840506428, "lon": 77.02002212405205 },
+          "AH2": { "lat": 10.877658864994375, "lon": 77.01990578323603 },
+          "AcademicHall": { "lat": 10.877533090700057, "lon": 77.01993696391582 },
+          "E14": { "lat": 10.877332905326387, "lon": 77.02012673020363 },
+          "E15": { "lat": 10.877350026449127, "lon": 77.02034398913383 },
+          "E12": { "lat": 10.877310516164393, "lon": 77.020732909441 },
+          "E13": { "lat": 10.87719988733929, "lon": 77.02103465795518 },
+          "E11": { "lat": 10.877435632048078, "lon": 77.02081203460695 },
+          "E10": { "lat": 10.877525188648388, "lon": 77.02086433768272 },
+          "E8": { "lat": 10.8776331833365, "lon": 77.02104605734348 },
+          "E9": { "lat": 10.877679278618288, "lon": 77.0211647450924 },
+          "E7": { "lat": 10.877855757631295, "lon": 77.02102661132812 },
+          "E6": { "lat": 10.878016432462733, "lon": 77.02102795243265 },
+          "AH10": { "lat": 10.87818764325341, "lon": 77.02103734016418 },
+          "AH9": { "lat": 10.878183692236265, "lon": 77.02085629105568 },
+          "AH8": { "lat": 10.878177107207595, "lon": 77.02070340514184 },
+          "AH7": { "lat": 10.87816130313816, "lon": 77.02033191919328 },
+          "C15": { "lat": 10.878218592885837, "lon": 77.02032051980495 },
+          "C14": { "lat": 10.878300247219826, "lon": 77.02029135078193 },
+          "SnacksBox": { "lat": 10.878318685292147, "lon": 77.02035941183567 },
+          "C13": { "lat": 10.878441825245918, "lon": 77.02029705047607 },
+          "FirstYearHostel": { "lat": 10.878406266120107, "lon": 77.01888889074327 },
+          "C12": { "lat": 10.878502407450494, "lon": 77.02038623392583 },
+          "C11": { "lat": 10.878524796522976, "lon": 77.02046334743501 },
+          "C10": { "lat": 10.878707860052595, "lon": 77.02048346400261 },
+          "C9": { "lat": 10.87883429235275, "lon": 77.02056527137758 },
+          "C8": { "lat": 10.87885668140032, "lon": 77.02064573764802 },
+          "C7": { "lat": 10.878960066098141, "lon": 77.02066384255886 },
+          "C4": { "lat": 10.878840218865497, "lon": 77.02095553278924 },
+          "E1": { "lat": 10.878198179298844, "lon": 77.02129483222963 },
+          "E2": { "lat": 10.878050345377154, "lon": 77.02130187302829 },
+          "E3": { "lat": 10.877684546650038, "lon": 77.02129483222963 },
+          "E4": { "lat": 10.877402706820613, "lon": 77.02128410339357 },
+          "E5": { "lat": 10.877155108993648, "lon": 77.02128142118455 },
+          "R3": { "lat": 10.878477384367482, "lon": 77.02128008008005 },
+          "R2": { "lat": 10.878580110694848, "lon": 77.0212706923485 },
+          "R1": { "lat": 10.878735517122832, "lon": 77.02122777700426 },
+          "C6": { "lat": 10.878881704451489, "lon": 77.02119156718256 },
+          "FC": { "lat": 10.8788790704462, "lon": 77.02125594019891 },
+          "F1": { "lat": 10.879022623700436, "lon": 77.02115535736085 },
+          "C5": { "lat": 10.879130617846135, "lon": 77.02111378312112 },
+          "C3": { "lat": 10.87924387995692, "lon": 77.02112451195717 },
+          "C2": { "lat": 10.879258696218232, "lon": 77.02103566378356 },
+          "C1": { "lat": 10.879180334650062, "lon": 77.0209612324834 },
+          "CL1": { "lat": 10.879252440463546, "lon": 77.02034398913383 },
+          "CL2": { "lat": 10.879181980901718, "lon": 77.02035538852216 },
+          "CL3": { "lat": 10.879197784917032, "lon": 77.02062696218492 },
+          "CL4": { "lat": 10.879209967178257, "lon": 77.02074632048608 },
+          "CL5": { "lat": 10.879229392945142, "lon": 77.0209300518036 },
+          "OpenAuditorium": { "lat": 10.879324217009408, "lon": 77.02072218060493 },
+          "C-Lab": { "lat": 10.879308413000798, "lon": 77.02034130692483 },
+          "C-Block": { "lat": 10.879030525712425, "lon": 77.02077582478525 },
+          "M-Block": { "lat": 10.880213849643328, "lon": 77.0209689438343 },
+          "E-Block": { "lat": 10.877210423419633, "lon": 77.0206792652607 },
+          "Auditorium": { "lat": 10.878569574662913, "lon": 77.02112585306169 },
+          "Store": { "lat": 10.878472774851959, "lon": 77.02121771872045 },
+          "BoysHostel": { "lat": 10.878192911276178, "lon": 77.0214195549488 },
+          "M6": { "lat": 10.879516499047112, "lon": 77.02109903097153 },
+          "M4": { "lat": 10.879685733477688, "lon": 77.0210762321949 },
+          "M3": { "lat": 10.879947157681613, "lon": 77.02103734016418 },
+          "M1": { "lat": 10.880215825138446, "lon": 77.02102661132812 },
+          "FirstYearGround": { "lat": 10.878574842678924, "lon": 77.01951250433922 },
+          "TennisCourt": { "lat": 10.87912403283837, "lon": 77.0194521546364 },
+          "M2": { "lat": 10.880214279276725, "lon": 77.02130287885667 },
+          "L1": { "lat": 10.880214255451648, "lon": 77.0215053856373 },
+          "LBlock": { "lat": 10.880360224019858, "lon": 77.0215067267418 },
+          "EN5": { "lat": 10.880246900243678, "lon": 77.02189296483995 },
+          "Library": { "lat": 10.880447193400265, "lon": 77.02177226543428 },
+          "EN0": { "lat": 10.880256571715382, "lon": 77.02200964093208 },
+          "EN1": { "lat": 10.880304793218917, "lon": 77.02233016490938 },
+          "EN2": { "lat": 10.880381633478317, "lon": 77.02236235141756 },
+          "EN3": { "lat": 10.880446860511313, "lon": 77.02242471277715 },
+          "EN4": { "lat": 10.880431047176591, "lon": 77.0225226134062 },
+          "EN6": { "lat": 10.880287818615388, "lon": 77.02238380908967 },
+          "EN7": { "lat": 10.880291982435864, "lon": 77.02248439192773 },
+          "EN8": { "lat": 10.88033680074075, "lon": 77.02253669500352 },
+          "Entrance": { "lat": 10.880440899736866, "lon": 77.02258564531803 },
+          "L2": { "lat": 10.880124633237742, "lon": 77.0215053856373 },
+          "ML1": { "lat": 10.880125948790944, "lon": 77.02145442366601 },
+          "L3": { "lat": 10.880019358279087, "lon": 77.02149063348772 },
+          "ML2": { "lat": 10.880016754245691, "lon": 77.0214530825615 },
+          "L4": { "lat": 10.879904239910715, "lon": 77.02149834483863 },
+          "ML3": { "lat": 10.879901604470499, "lon": 77.02144302427769 },
+          "L5": { "lat": 10.879749197124072, "lon": 77.02150136232378 },
+          "L6": { "lat": 10.87971455157038, "lon": 77.02128410339357 },
+          "ML4": { "lat": 10.879797952066903, "lon": 77.02121570706369 },
+          "A3": { "lat": 10.87975680382998, "lon": 77.02179104089738 },
+          "A2": { "lat": 10.87979106456737, "lon": 77.02207535505296 },
+          "A1": { "lat": 10.879948112399843, "lon": 77.02205389738084 },
+          "A4": { "lat": 10.879870033936065, "lon": 77.02255278825761 },
+          "A5": { "lat": 10.8800680009111, "lon": 77.02252328395845 },
+          "L7": { "lat": 10.879703148368558, "lon": 77.02154427766801 },
+          "L8": { "lat": 10.879303971778334, "lon": 77.02158182859422 },
+          "L9": { "lat": 10.879269988222914, "lon": 77.02156104147436 },
+          "DBlock": { "lat": 10.879192942997335, "lon": 77.02149063348772 },
+          "L10": { "lat": 10.879248748709468, "lon": 77.02125459909439 },
+          "COE": { "lat": 10.879195606540474, "lon": 77.02125392854215 },
+          "A7": { "lat": 10.879248966023603, "lon": 77.02167570590974 },
+          "FC1": { "lat": 10.878974668699255, "lon": 77.02167302370073 },
+          "A8": { "lat": 10.879275317594333, "lon": 77.02185675501823 },
+          "ChemistryLab": { "lat": 10.879214516066734, "lon": 77.02186077833177 },
+          "A9": { "lat": 10.879288308553516, "lon": 77.0220673084259 },
+          "PhysicsLab": { "lat": 10.879237117346078, "lon": 77.02205792069437 },
+          "A10": { "lat": 10.879314922919217, "lon": 77.02218532562257 },
+          "A11": { "lat": 10.879795484123411, "lon": 77.02213570475578 },
+          "A13": { "lat": 10.87937637937702, "lon": 77.02265605330467 },
+          "A14": { "lat": 10.879321942671584, "lon": 77.0223355293274 },
+          "SeminarHall": { "lat": 10.879250785639075, "lon": 77.02232748270035 },
+          "A15": { "lat": 10.879343026233503, "lon": 77.0225501060486 },
+          "NewHall": { "lat": 10.879290268231674, "lon": 77.02255547046663 },
+          "B1": { "lat": 10.879017088561785, "lon": 77.02267080545425 },
+          "BBlock": { "lat": 10.879017128631368, "lon": 77.02260173857213 },
+          "B2": { "lat": 10.878984820626428, "lon": 77.02291488647462 },
+          "B4": { "lat": 10.878205284270726, "lon": 77.0226949453354 },
+          "B3": { "lat": 10.878223732456599, "lon": 77.02301144599916 },
+          "B6": { "lat": 10.878611144096023, "lon": 77.02298998832704 },
+          "GirlsHostel": { "lat": 10.878047156916493, "lon": 77.02298998832704 },
+          "ABlock": { "lat": 10.879522753382469, "lon": 77.02188760042192 },
+          "A17": { "lat": 10.87949639894573, "lon": 77.02157109975816 },
+          "A18": { "lat": 10.879543836930202, "lon": 77.02215582132341 },
+          "FoodCourt": { "lat": 10.878829567387074, "lon": 77.02150404453279 },
+          // 2. Added from Code 2 (Unique)
+          "BH5": { "lat": 10.878443800752768, "lon": 77.01926708221436 },
+          "BH6": { "lat": 10.87844445925505, "lon": 77.01908133924009 },
+          "FirstYearGround2": { "lat": 10.878581427698828, "lon": 77.0192925632 }
+        };
+
+        // --- MERGED ADJACENCY ---
+        adjacency = {
+          // 1. High Priority Data (Code 1)
+          "EX12": ["EX11"],
+          "EX11": ["EX12", "EX10"],
+          "EX10": ["EX11", "EX9"],
+          "EX9": ["EX10", "EX8"],
+          "EX8": ["EX9", "EX7"],
+          "EX7": ["EX8", "EX6"],
+          "EX6": ["EX7", "EX5", "TurfGround"],
+          "EX5": ["EX6", "EX4"],
+          "EX4": ["EX5", "EX3"],
+          "EX3": ["EX4", "EX2", "TennisCourt"],
+          "EX2": ["EX3", "EX1"],
+          "EX1": ["EX2", "BH3"],
+          "BH3": ["BH4", "BH2", "FirstYearGround"],
+          "BH2": ["BH3", "BH1"],
+          "BH1": ["BH2", "AH6"],
+          "AH6": ["BH1", "AH5", "AH7"],
+          "AH5": ["AH6", "AH4"],
+          "AH4": ["AH5", "AH3"],
+          "AH3": ["AH4", "AH1", "E14"],
+          "AH1": ["AH3", "AH2", "AcademicHall"],
+          "AH2": ["AH1", "AcademicHall"],
+          "AcademicHall": ["AH2", "AH1"],
+          "E14": ["AH3", "E15"],
+          "E15": ["E14", "E12"],
+          "E12": ["E15", "E13", "E11", "E-Block"],
+          "E13": ["E12", "E5"],
+          "E11": ["E12", "E10"],
+          "E10": ["E11", "E8"],
+          "E8": ["E10", "E9", "E7"],
+          "E9": ["E8", "E3"],
+          "E7": ["E8", "E6"],
+          "E6": ["E7", "AH10"],
+          "AH10": ["E6", "AH9", "E1"],
+          "AH9": ["AH10", "AH8"],
+          "AH8": ["AH9", "AH7"],
+          "AH7": ["AH8", "AH6", "C15"],
+          "C15": ["AH7", "C14"],
+          "C14": ["C15", "C13", "SnacksBox"],
+          "SnacksBox": ["C14"],
+          "C13": ["C14", "C12"],
+          "FirstYearHostel": ["BH4"],
+          "BH4": ["FirstYearHostel", "BH3"],
+          "TurfGround": ["EX6"],
+          "C12": ["C13", "C11"],
+          "C11": ["C12", "C10"],
+          "C10": ["C11", "C9"],
+          "C9": ["C10", "C8"],
+          "C8": ["C9", "C7", "C4"],
+          "C7": ["C8", "C-Block"],
+          "C4": ["C8", "C6"],
+          "E1": ["AH10", "E2", "R3", "BoysHostel"],
+          "E2": ["E3", "E1"],
+          "E3": ["E4", "E9", "E2"],
+          "E4": ["E5", "E3"],
+          "E5": ["E13", "E4"],
+          "R3": ["R2", "E1", "Store"],
+          "R2": ["R1", "R3", "Auditorium"],
+          "R1": ["C6", "R2"],
+          "C6": ["C4", "FC", "F1", "R1"],
+          "FC": ["C6", "FoodCourt"],
+          "F1": ["C5", "C6"],
+          "C5": ["C3", "F1"],
+          "C3": ["C5", "C2", "M6", "L9"],
+          "C2": ["C3", "C1"],
+          "C1": ["C2", "CL5"],
+          "CL1": ["CL2", "C-Lab"],
+          "CL2": ["CL3", "CL1"],
+          "CL3": ["CL4", "CL2"],
+          "CL4": ["CL5", "CL3", "OpenAuditorium", "C-Block"],
+          "CL5": ["C1", "CL4"],
+          "OpenAuditorium": ["CL4"],
+          "C-Lab": ["CL1"],
+          "C-Block": ["CL4", "C7"],
+          "Auditorium": ["R2"],
+          "Store": ["R3"],
+          "BoysHostel": ["E1"],
+          "M6": ["C3", "M4"],
+          "M4": ["M6", "M3", "L6"],
+          "M3": ["M4", "M1"],
+          "M1": ["M-Block", "M3", "M2"],
+          "M-Block": ["M1"],
+          "FirstYearGround": ["BH3"],
+          "TennisCourt": ["EX3"],
+          "E-Block": ["E12"],
+          "M2": ["M1", "L1"],
+          "L1": ["M2", "LBlock", "EN5", "L2"],
+          "LBlock": ["L1"],
+          "EN5": ["L1", "Library", "EN0"],
+          "Library": ["EN5"],
+          "EN0": ["EN5", "EN1", "A1"],
+          "EN1": ["EN0", "EN2", "EN6"],
+          "EN2": ["EN1", "EN3"],
+          "EN3": ["EN2", "EN4"],
+          "EN4": ["EN3", "EN8", "Entrance"],
+          "EN6": ["EN1", "EN7"],
+          "EN7": ["EN6", "EN8", "A5"],
+          "EN8": ["EN7", "EN4"],
+          "Entrance": ["EN4"],
+          "L2": ["L1", "ML1", "L3"],
+          "ML1": ["L2"],
+          "L3": ["L2", "ML2", "L4"],
+          "ML2": ["L3"],
+          "L4": ["ML3", "L3", "L5"],
+          "ML3": ["L4"],
+          "L5": ["L4", "L6", "A3", "L7"],
+          "L6": ["L5", "ML4", "M4"],
+          "ML4": ["L6"],
+          "A3": ["L5", "A2", "ABlock"],
+          "A2": ["A3", "A1", "A4", "A11"],
+          "A1": ["A2", "EN0"],
+          "A4": ["A2", "A5", "A11", "A13"],
+          "A5": ["A4", "EN7"],
+          "L7": ["L5", "L8"],
+          "L8": ["L7", "L9", "A7"],
+          "L9": ["C3", "L8", "DBlock"],
+          "DBlock": ["L9"],
+          "L10": ["COE"],
+          "COE": ["L10"],
+          "A7": ["L8", "FC1", "A8"],
+          "FC1": ["A7", "FoodCourt"],
+          "A8": ["A7", "ChemistryLab", "A9", "ABlock"],
+          "ChemistryLab": ["A8"],
+          "A9": ["A8", "PhysicsLab", "A10"],
+          "PhysicsLab": ["A9"],
+          "A10": ["A9", "A11", "A14"],
+          "A11": ["A2", "A4", "A10", "ABlock"],
+          "A13": ["A4", "A15", "B1"],
+          "A14": ["A10", "SeminarHall", "A15"],
+          "SeminarHall": ["A14"],
+          "A15": ["A14", "A13", "NewHall"],
+          "NewHall": ["A15"],
+          "B1": ["A13", "BBlock", "B2", "B4"],
+          "BBlock": ["B1"],
+          "B2": ["B1", "B6"],
+          "B4": ["B1", "B3"],
+          "B3": ["B6", "B4", "GirlsHostel"],
+          "B6": ["B2", "B3"],
+          "GirlsHostel": ["B3"],
+          "ABlock": ["A8", "A11", "A17", "A3", "A18"],
+          "A17": ["ABlock"],
+          "A18": ["ABlock"],
+          "FoodCourt": ["FC1", "FC"],
+          // 2. Added from Code 2 (Unique)
+          "BH5": ["BH4", "BH6", "FirstYearGround2"],
+          "BH6": ["BH5", "FirstYearHostel"],
+          "FirstYearGround2": ["BH5"]
+        };
+    }
+
+    // --- RENDER LOGIC ---
+    function renderMap() {
+        // Clear existing layers
+        polylineLayer.clearLayers();
+        for (let k in markers) { map.removeLayer(markers[k]); }
+        markers = {};
+
+        const drawnPairs = new Set();
+
+        // 1. Draw Connections (Red Lines)
+        for (const startName in adjacency) {
+            const neighbors = adjacency[startName];
+            if (!nodes[startName]) continue;
+
+            neighbors.forEach(targetName => {
+                if (nodes[targetName]) {
+                    const p1 = nodes[startName];
+                    const p2 = nodes[targetName];
+                    const pairKey = [startName, targetName].sort().join('-');
+
+                    if (!drawnPairs.has(pairKey)) {
+                        L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
+                            color: 'red', weight: 3, opacity: 0.6, interactive: false
+                        }).addTo(polylineLayer);
+
+                        // Draw Arrow
+                        drawArrow(p1, p2, startName, targetName);
+                        drawnPairs.add(pairKey);
+                    }
+                }
+            });
+        }
+
+        // 2. Draw Nodes (Blue Markers)
+        for (const key in nodes) {
+            const node = nodes[key];
+            const marker = L.marker([node.lat, node.lon], {
+                icon: L.divIcon({ className: 'node-marker', iconSize: [12, 12], iconAnchor: [6, 6] }),
+                title: key,
+                draggable: (currentMode === 'edit') 
+            }).addTo(map);
+
+            marker.bindTooltip(key, { permanent: false, direction: "top" });
+            
+            // Events
+            marker.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                handleNodeClick(key, marker);
+            });
+            
+            marker.on('drag', (e) => {
+                nodes[key].lat = e.target.getLatLng().lat;
+                nodes[key].lon = e.target.getLatLng().lng;
+                renderMap(); // Re-render lines live
+            });
+
+            markers[key] = marker;
+        }
+    }
+
+    function drawArrow(p1, p2, n1, n2) {
+        // Determine One-way or Two-way
+        const isTwoWay = adjacency[n2] && adjacency[n2].includes(n1);
+        const symbol = isTwoWay ? '◄►' : '►';
+        
+        const midLat = (p1.lat + p2.lat) / 2;
+        const midLon = (p1.lon + p2.lon) / 2;
+        let bearing = getBearing(p1.lat, p1.lon, p2.lat, p2.lon);
+        
+        // Adjust rotation for ◄►
+        if (isTwoWay) bearing -= 90;
+
+        const arrowIcon = L.divIcon({
+            className: 'direction-icon',
+            html: `<div style="transform: rotate(${bearing}deg); white-space:nowrap;">${symbol}</div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        L.marker([midLat, midLon], { icon: arrowIcon, interactive: false }).addTo(polylineLayer);
+    }
+
+    // --- INTERACTION LOGIC ---
+    function setMode(mode) {
+        currentMode = mode;
+        
+        // UI Updates
+        document.getElementById('btn-mode-test').className = mode === 'test' ? 'btn-mode active' : 'btn-mode';
+        document.getElementById('btn-mode-edit').className = mode === 'edit' ? 'btn-mode active' : 'btn-mode';
+        document.getElementById('edit-controls').style.display = mode === 'edit' ? 'block' : 'none';
+
+        // Logic Updates
+        resetTest();
+        clearEditSelection();
+        renderMap(); // Refreshes draggability of markers
+    }
+
+    function handleNodeClick(name, marker) {
+        if (currentMode === 'test') {
+            // TEST MODE LOGIC
+            if (!testStart) {
+                testStart = name;
+                updateMarkerStyle(marker, 'marker-start');
+                document.getElementById('lbl-start').innerText = name;
+            } else if (!testEnd) {
+                if (testStart === name) return;
+                testEnd = name;
+                updateMarkerStyle(marker, 'marker-end');
+                document.getElementById('lbl-end').innerText = name;
+                runPathfinding();
+            } else {
+                // Reset on 3rd click
+                resetTest();
+                handleNodeClick(name, marker);
+            }
+        } else {
+            // EDIT MODE LOGIC
+            if (!editSel1) {
+                editSel1 = name;
+                updateMarkerStyle(marker, 'marker-selected');
+                document.getElementById('sel-1').innerText = name;
+            } else if (!editSel2) {
+                if (editSel1 === name) { clearEditSelection(); return; } // Deselect
+                
+                editSel2 = name;
+                updateMarkerStyle(marker, 'marker-selected');
+                document.getElementById('sel-2').innerText = name;
+                
+                // Auto Connect logic
+                connectNodes(editSel1, editSel2);
+                
+                // Keep selection visible for potential Deletion actions
+            } else {
+                clearEditSelection();
+                handleNodeClick(name, marker);
+            }
+        }
+    }
+
+    // --- TEST MODE FUNCTIONS ---
+    function runPathfinding() {
+        const graph = buildGraph();
+        const path = astar(graph, testStart, testEnd);
+        
+        if (path.length > 0) {
+            // Draw Path
+            const latlngs = path.map(n => [nodes[n].lat, nodes[n].lon]);
+            if (testPathLine) map.removeLayer(testPathLine);
+            testPathLine = L.polyline(latlngs, { color: '#28a745', weight: 6, opacity: 0.8 }).addTo(map);
+            map.fitBounds(testPathLine.getBounds());
+
+            // Calc Distance
+            let dist = 0;
+            for (let i=0; i<path.length-1; i++) {
+                dist += getDist(nodes[path[i]], nodes[path[i+1]]);
+            }
+            document.getElementById('lbl-dist').innerText = dist.toFixed(1) + " m";
+            document.getElementById('route-text').innerText = path.join(" ➔ ");
+        } else {
+            alert("No path found!");
+            document.getElementById('route-text').innerText = "No Path Found.";
+        }
+    }
+
+    function resetTest() {
+        testStart = null;
+        testEnd = null;
+        if (testPathLine) map.removeLayer(testPathLine);
+        document.getElementById('lbl-start').innerText = "-";
+        document.getElementById('lbl-end').innerText = "-";
+        document.getElementById('lbl-dist').innerText = "0 m";
+        document.getElementById('route-text').innerText = "Select nodes...";
+        
+        // Reset Styles
+        for(let k in markers) updateMarkerStyle(markers[k], '');
+    }
+
+    // --- EDIT MODE FUNCTIONS ---
+    function clearEditSelection() {
+        editSel1 = null;
+        editSel2 = null;
+        document.getElementById('sel-1').innerText = "-";
+        document.getElementById('sel-2').innerText = "-";
+        for(let k in markers) updateMarkerStyle(markers[k], '');
+    }
+
+    function connectNodes(n1, n2) {
+        if (!adjacency[n1]) adjacency[n1] = [];
+        if (!adjacency[n2]) adjacency[n2] = [];
+
+        // Connect 1->2
+        if (!adjacency[n1].includes(n2)) adjacency[n1].push(n2);
+        // Connect 2->1 (Bidirectional)
+        if (!adjacency[n2].includes(n1)) adjacency[n2].push(n1);
+        
+        renderMap();
+    }
+
+    function deleteSelectedNode() {
+        if (!editSel1) { alert("Select a node first!"); return; }
+        if (!confirm(`Delete node "${editSel1}"?`)) return;
+
+        // 1. Delete from Nodes
+        delete nodes[editSel1];
+        
+        // 2. Delete from Adjacency (Keys)
+        delete adjacency[editSel1];
+
+        // 3. Delete from Adjacency (Values) - Remove connections TO this node
+        for (const key in adjacency) {
+            adjacency[key] = adjacency[key].filter(neighbor => neighbor !== editSel1);
+        }
+
+        clearEditSelection();
+        renderMap();
+    }
+
+    function deleteConnection() {
+        if (!editSel1 || !editSel2) { alert("Select two nodes to define a connection!"); return; }
+        
+        // Remove 1->2
+        if (adjacency[editSel1]) {
+            adjacency[editSel1] = adjacency[editSel1].filter(n => n !== editSel2);
+        }
+        // Remove 2->1
+        if (adjacency[editSel2]) {
+            adjacency[editSel2] = adjacency[editSel2].filter(n => n !== editSel1);
+        }
+
+        renderMap();
+        alert(`Connection broken between ${editSel1} and ${editSel2}`);
+    }
+
+    function exportData() {
+        let code = "// 1. NODES\nconst nodes = {\n";
+        for (let k in nodes) {
+            code += `  "${k}": { lat: ${nodes[k].lat}, lon: ${nodes[k].lon} },\n`;
+        }
+        code += "};\n\n// 2. ADJACENCY\nconst adjacency = {\n";
+        for (let k in adjacency) {
+            if (adjacency[k].length > 0) {
+                const neighbors = adjacency[k].map(n => `"${n}"`).join(", ");
+                code += `  "${k}": [${neighbors}],\n`;
+            }
+        }
+        code += "};";
+        
+        document.getElementById('output-area').style.display = 'block';
+        document.getElementById('code-output').value = code;
+    }
+
+    // --- UTILS ---
+    function updateMarkerStyle(marker, cls) {
+        if (marker && marker.getElement()) {
+            marker.getElement().className = `leaflet-marker-icon leaflet-zoom-animated leaflet-interactive node-marker ${cls}`;
+        }
+    }
+
+    function buildGraph() {
+        const graph = {};
+        for (const node in adjacency) {
+            graph[node] = adjacency[node].map(neighbor => ({
+                to: neighbor,
+                distance: getDist(nodes[node], nodes[neighbor])
+            }));
+        }
+        return graph;
+    }
+
+    function astar(graph, start, goal) {
+        const gScore = {}, fScore = {}, cameFrom = {};
+        for (const n in nodes) { gScore[n] = Infinity; fScore[n] = Infinity; }
+        gScore[start] = 0;
+        fScore[start] = getDist(nodes[start], nodes[goal]);
+        
+        const openSet = [start];
+        while (openSet.length > 0) {
+            openSet.sort((a, b) => fScore[a] - fScore[b]);
+            const current = openSet.shift();
+            if (current === goal) {
+                const path = [];
+                let cur = current;
+                while (cameFrom[cur]) { path.push(cur); cur = cameFrom[cur]; }
+                path.push(start);
+                return path.reverse();
+            }
+            if (!graph[current]) continue;
+            for (const edge of graph[current]) {
+                const tentative = gScore[current] + edge.distance;
+                if (tentative < gScore[edge.to]) {
+                    cameFrom[edge.to] = current;
+                    gScore[edge.to] = tentative;
+                    fScore[edge.to] = tentative + getDist(nodes[edge.to], nodes[goal]);
+                    if (!openSet.includes(edge.to)) openSet.push(edge.to);
+                }
+            }
+        }
+        return [];
+    }
+
+    function getDist(p1, p2) {
+        const R = 6371e3;
+        const rad = Math.PI/180;
+        const dLat = (p2.lat - p1.lat)*rad;
+        const dLon = (p2.lon - p1.lon)*rad;
+        const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*rad)*Math.cos(p2.lat*rad)*Math.sin(dLon/2)**2;
+        return R * 2 * Math.asin(Math.sqrt(a));
+    }
+
+    function getBearing(lat1, lon1, lat2, lon2) {
+        const rad = Math.PI/180;
+        const dLon = (lon2 - lon1)*rad;
+        const y = Math.sin(dLon) * Math.cos(lat2*rad);
+        const x = Math.cos(lat1*rad)*Math.sin(lat2*rad) - Math.sin(lat1*rad)*Math.cos(lat2*rad)*Math.cos(dLon);
+        return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+    }
+  </script>
+</body>
+</html>
