@@ -1,7 +1,10 @@
 <!-- HEADER -->
 <p align="center">
-  <img src="https://www.openstreetmap.org/#map=16/10.87885/77.02566" width="90" />
+  
+<img width="2912" height="1440" alt="Gemini_Generated_Image_igmt3aigmt3aigmt" src="https://github.com/user-attachments/assets/b971fa21-09ae-4727-b345-e896498e0741" />
+
 </p>
+
 
 <h1 align="center">📍 Campus Navigator</h1>
 
@@ -101,6 +104,56 @@ To avoid manually entering GPS coordinates and adjacency values from Google Maps
 - Better route engine + offline support  
 
 ---
+
+
+## 🗺️ Contribution to OpenStreetMap
+
+Thanks to multiple on-ground measurements, satellite referencing, and continuous improvement,  
+we contributed a fully mapped, updated, and walkable path layout of `Karpagam College of Engineering` directly to the OpenStreetMap community.
+
+This ensures:
+
+- 🚶 Better pedestrian routing  
+- 🎓 Easier onboarding for new students  
+- 🧭 Accurate building identities and pathways  
+- 🧩 A foundation for smart-navigation systems (including this project)
+
+<br>
+
+### 🔍 Before vs After
+
+
+| 🕘 Before (Initial OSM View) | 🚀 After Contribution |
+|----------------------------|----------------------|
+| <img src="https://github.com/user-attachments/assets/df2d7790-93a2-4855-8005-d6509374c789" width="400"/> | <img src="https://github.com/user-attachments/assets/95316886-20ba-4b16-8441-6afa3d43ca03" width="400"/> |
+
+> ✔ Updated campus roads  
+> ✔ Named academic blocks, labs & hostels  
+> ✔ Added pedestrian pathways, sports arenas and functional facilities  
+> ✔ Made routing-ready for GIS and navigation engines  
+
+A formal request and verification was also completed with the institution to ensure accuracy and authenticity before submitting changes.
+
+<br>
+
+---
+
+## 👥 Authors & Contributors
+
+This project is designed, developed, tested, and continuously improved by:
+
+| Name | Role |
+|------|------|
+| **Shanupriya T** | Lead Developer, System Engineer, Frontend/Backend Engineering & Automation  |
+| **Varunshiyam S** |  Research, UI/UX Planner, OSM Editor & Navigator Logic Contributor, Developer |
+
+> 💡 _Both contributors are students of Karpagam College of Engineering, building this project as a real-world solution and open-source asset._
+
+<br>
+
+---
+
+
 
 ## 📂 Planned Folder Structure
 
