@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HELPER CODE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    /* Custom Draggable Node Style */
+    .custom-node-marker {
+      background-color: #007bff;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .custom-node-marker:hover {
+        transform: scale(1.2);
+        background-color: #0056b3;
+    }
+
+    /* Selected Node Style (Green) */
+    .selected-node-marker {
+      background-color: #28a745 !important;
+      border: 2px solid #ffff00 !important;
+      transform: scale(1.4);
+      z-index: 1000 !important;
+      box-shadow: 0 0 8px rgba(40, 167, 69, 0.8);
+    }
+
+    /* Node Labels */
+    .node-label {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #333;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Directional Arrows on Lines */
+    .direction-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 14px;
+        color: red;
+        font-weight: bold;
+        text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; /* White outline */
+    }
+
+    /* Control Panel */
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      max-width: 320px;
+      min-width: 260px;
+    }
+    #controls h4 { margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    #export-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    #export-btn:hover { background: #0056b3; }
+    #output-area {
+      display: none;
+      margin-top: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 250px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 11px;
+      box-sizing: border-box;
+      white-space: pre;
+      overflow-x: auto;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 5px;
+      background: #f9f9f9;
+    }
+    .instructions {
+        font-size: 12px;
+        color: #444;
+        margin-bottom: 10px;
+        line-height: 1.5;
+        background: #f0f8ff;
+        padding: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #007bff;
+    }
+    .legend {
+        font-size: 11px;
+        margin-bottom: 5px;
+        color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="controls">
+    <h4>Route Editor</h4>
+    <div class="instructions">
+        <strong>1. Move:</strong> Drag blue dots.<br>
+        <strong>2. Add Node:</strong> Click on empty map.<br>
+        <strong>3. Connect:</strong> Click Node A (turns green) -> Click Node B.
+    </div>
+    <div class="legend">
+        <span>► One-way</span> &nbsp;|&nbsp; <span>◄► Two-way</span>
+    </div>
+    <button id="export-btn" onclick="exportData()">Get Updated Code</button>
+    <div id="output-area">
+        <p style="margin:5px 0; font-size:11px; font-weight:bold;">Updated Code:</p>
+        <textarea id="code-output" readonly></textarea>
+        <button onclick="document.getElementById('output-area').style.display='none'" style="margin-top:5px; width:100%; cursor:pointer;">Close Preview</button>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+    // Global variables
+    let map;
+    let nodes = {};
+    let adjacency = {};
+    let polylineLayerGroup; 
+    let markers = {}; 
+    let selectedNodeName = null;
+
+    window.onload = function () {
+      try {
+        // 1. Initialize Map
+        map = L.map("map").setView([10.8795, 77.0213], 17);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 22,
+          attribution: "©️ OpenStreetMap Contributors"
+        }).addTo(map);
+
+        polylineLayerGroup = L.layerGroup().addTo(map);
+
+        // 2. Define Data (Assigned to global variables, NO 'const' here)
+        // 1. NODES
+const nodes = {
+  "EX12": { lat: 10.879899745752333, lon: 77.01834976673128 },
+  "EX11": { lat: 10.87997349763907, lon: 77.01876282691957 },
+  "EX10": { lat: 10.880073589456162, lon: 77.01914906501771 },
+  "EX9": { lat: 10.880097295407934, lon: 77.01935827732088 },
+  "EX8": { lat: 10.880038030525, lon: 77.01941326260568 },
+  "EX7": { lat: 10.879887892768833, lon: 77.0194534957409 },
+  "EX6": { lat: 10.879711414958763, lon: 77.01949506998064 },
+  "EX5": { lat: 10.87946250204905, lon: 77.01956883072855 },
+  "EX4": { lat: 10.879274170979256, lon: 77.01960772275926 },
+  "EX3": { lat: 10.879155640874329, lon: 77.01960772275926 },
+  "EX2": { lat: 10.878836926358446, lon: 77.01962247490884 },
+  "EX1": { lat: 10.878603215574085, lon: 77.01963670373154 },
+  "BH3": { lat: 10.878439191236737, lon: 77.01962381601335 },
+  "TurfGround": { lat: 10.879575764033733, lon: 77.01934218406679 },
+  "BH2": { lat: 10.8782930036911, lon: 77.0197592675686 },
+  "BH1": { lat: 10.8781454990679, lon: 77.0198705792427 },
+  "AH6": { lat: 10.878150767091418, lon: 77.02006235718729 },
+  "AH5": { lat: 10.878020383482092, lon: 77.02007979154587 },
+  "AH4": { lat: 10.877853123616946, lon: 77.02010259032251 },
+  "AH3": { lat: 10.877670059562497, lon: 77.02011331915857 },
+  "AH1": { lat: 10.877660840506428, lon: 77.02002212405205 },
+  "AH2": { lat: 10.877658864994375, lon: 77.01990578323603 },
+  "AcademicHall": { lat: 10.877533090700057, lon: 77.01993696391582 },
+  "E14": { lat: 10.877332905326387, lon: 77.02012673020363 },
+  "E15": { lat: 10.877350026449127, lon: 77.02034398913383 },
+  "E12": { lat: 10.877310516164393, lon: 77.020732909441 },
+  "E13": { lat: 10.87719988733929, lon: 77.02103465795518 },
+  "E11": { lat: 10.877435632048078, lon: 77.02081203460695 },
+  "E10": { lat: 10.877525188648388, lon: 77.02086433768272 },
+  "E8": { lat: 10.8776331833365, lon: 77.02104605734348 },
+  "E9": { lat: 10.877679278618288, lon: 77.0211647450924 },
+  "E7": { lat: 10.877855757631295, lon: 77.02102661132812 },
+  "E6": { lat: 10.878016432462733, lon: 77.02102795243265 },
+  "AH10": { lat: 10.87818764325341, lon: 77.02103734016418 },
+  "AH9": { lat: 10.878183692236265, lon: 77.02085629105568 },
+  "AH8": { lat: 10.878177107207595, lon: 77.02070340514184 },
+  "AH7": { lat: 10.87816130313816, lon: 77.02033191919328 },
+  "C15": { lat: 10.878218592885837, lon: 77.02032051980495 },
+  "C14": { lat: 10.878300247219826, lon: 77.02029135078193 },
+  "SnacksBox": { lat: 10.878318685292147, lon: 77.02035941183567 },
+  "C13": { lat: 10.878441825245918, lon: 77.02029705047607 },
+  "FirstYearHostel": { lat: 10.878406266120107, lon: 77.01888889074327 },
+  "C12": { lat: 10.878502407450494, lon: 77.02038623392583 },
+  "C11": { lat: 10.878524796522976, lon: 77.02046334743501 },
+  "C10": { lat: 10.878707860052595, lon: 77.02048346400261 },
+  "C9": { lat: 10.87883429235275, lon: 77.02056527137758 },
+  "C8": { lat: 10.87885668140032, lon: 77.02064573764802 },
+  "C7": { lat: 10.878960066098141, lon: 77.02066384255886 },
+  "C4": { lat: 10.878840218865497, lon: 77.02095553278924 },
+  "E1": { lat: 10.878198179298844, lon: 77.02129483222963 },
+  "E2": { lat: 10.878050345377154, lon: 77.02130187302829 },
+  "E3": { lat: 10.877684546650038, lon: 77.02129483222963 },
+  "E4": { lat: 10.877402706820613, lon: 77.02128410339357 },
+  "E5": { lat: 10.877155108993648, lon: 77.02128142118455 },
+  "R3": { lat: 10.878477384367482, lon: 77.02128008008005 },
+  "R2": { lat: 10.878580110694848, lon: 77.0212706923485 },
+  "R1": { lat: 10.878735517122832, lon: 77.02122777700426 },
+  "C6": { lat: 10.878881704451489, lon: 77.02119156718256 },
+  "FC": { lat: 10.8788790704462, lon: 77.02125594019891 },
+  "F1": { lat: 10.879022623700436, lon: 77.02115535736085 },
+  "C5": { lat: 10.879130617846135, lon: 77.02111378312112 },
+  "C3": { lat: 10.87924387995692, lon: 77.02112451195717 },
+  "C2": { lat: 10.879258696218232, lon: 77.02103566378356 },
+  "C1": { lat: 10.879180334650062, lon: 77.0209612324834 },
+  "CL1": { lat: 10.879252440463546, lon: 77.02034398913383 },
+  "CL2": { lat: 10.879181980901718, lon: 77.02035538852216 },
+  "CL3": { lat: 10.879197784917032, lon: 77.02062696218492 },
+  "CL4": { lat: 10.879209967178257, lon: 77.02074632048608 },
+  "CL5": { lat: 10.879229392945142, lon: 77.0209300518036 },
+  "OpenAuditorium": { lat: 10.879324217009408, lon: 77.02072218060493 },
+  "C-Lab": { lat: 10.879308413000798, lon: 77.02034130692483 },
+  "C-Block": { lat: 10.879030525712425, lon: 77.02077582478525 },
+  "M-Block": { lat: 10.880213849643328, lon: 77.0209689438343 },
+  "E-Block": { lat: 10.877210423419633, lon: 77.0206792652607 },
+  "Auditorium": { lat: 10.878569574662913, lon: 77.02112585306169 },
+  "Store": { lat: 10.878472774851959, lon: 77.02121771872045 },
+  "BoysHostel": { lat: 10.878192911276178, lon: 77.0214195549488 },
+  "M6": { lat: 10.879516499047112, lon: 77.02109903097153 },
+  "M4": { lat: 10.879685733477688, lon: 77.0210762321949 },
+  "M3": { lat: 10.879947157681613, lon: 77.02103734016418 },
+  "M1": { lat: 10.880215825138446, lon: 77.02102661132812 },
+  "FirstYearGround": { lat: 10.878574842678924, lon: 77.01951250433922 },
+  "TennisCourt": { lat: 10.87912403283837, lon: 77.0194521546364 },
+  "BH4": { lat: 10.878443142250484, lon: 77.0194521546364 },
+  "BH5": { lat: 10.878443800752768, lon: 77.01926708221436 },
+  "BH6": { lat: 10.87844445925505, lon: 77.01908133924009 },
+  "FirstYearGround2": { lat: 10.878581427698828, lon: 77.0192925632 },
+};
+
+// 2. ADJACENCY
+const adjacency = {
+  "EX12": ["EX11"],
+  "EX11": ["EX12", "EX10"],
+  "EX10": ["EX11", "EX9"],
+  "EX9": ["EX10", "EX8"],
+  "EX8": ["EX9", "EX7"],
+  "EX7": ["EX8", "EX6"],
+  "EX6": ["EX7", "EX5", "TurfGround"],
+  "EX5": ["EX6", "EX4"],
+  "EX4": ["EX5", "EX3"],
+  "EX3": ["EX4", "EX2", "TennisCourt"],
+  "EX2": ["EX3", "EX1"],
+  "EX1": ["EX2", "BH3"],
+  "BH3": ["BH2", "BH4", "EX1"],
+  "BH2": ["BH3", "BH1"],
+  "BH1": ["BH2", "AH6"],
+  "AH6": ["BH1", "AH5", "AH7"],
+  "AH5": ["AH6", "AH4"],
+  "AH4": ["AH5", "AH3"],
+  "AH3": ["AH4", "AH1", "E14"],
+  "AH1": ["AH3", "AH2", "AcademicHall"],
+  "AH2": ["AH1", "AcademicHall"],
+  "AcademicHall": ["AH2", "AH1"],
+  "E14": ["AH3", "E15"],
+  "E15": ["E14", "E12"],
+  "E12": ["E15", "E13", "E11", "E-Block"],
+  "E13": ["E12", "E5"],
+  "E11": ["E12", "E10"],
+  "E10": ["E11", "E8"],
+  "E8": ["E10", "E9", "E7"],
+  "E9": ["E8", "E3"],
+  "E7": ["E8", "E6"],
+  "E6": ["E7", "AH10"],
+  "AH10": ["E6", "AH9", "E1"],
+  "AH9": ["AH10", "AH8"],
+  "AH8": ["AH9", "AH7"],
+  "AH7": ["AH8", "AH6", "C15"],
+  "C15": ["AH7", "C14"],
+  "C14": ["C15", "C13", "SnacksBox"],
+  "SnacksBox": ["C14"],
+  "C13": ["C14", "C12"],
+  "FirstYearHostel": ["BH6"],
+  "TurfGround": ["EX6"],
+  "C12": ["C13", "C11"],
+  "C11": ["C12", "C10"],
+  "C10": ["C11", "C9"],
+  "C9": ["C10", "C8"],
+  "C8": ["C9", "C7", "C4"],
+  "C7": ["C8", "C-Block"],
+  "C4": ["C8", "C6"],
+  "E1": ["AH10", "E2", "R3", "BoysHostel"],
+  "E2": ["E3", "E1"],
+  "E3": ["E4", "E9", "E2"],
+  "E4": ["E5", "E3"],
+  "E5": ["E13", "E4"],
+  "R3": ["R2", "E1", "Store"],
+  "R2": ["R1", "R3", "Auditorium"],
+  "R1": ["C6", "R2"],
+  "C6": ["C4", "FC", "F1", "R1"],
+  "FC": ["C6"],
+  "F1": ["C5", "C6"],
+  "C5": ["C3", "F1"],
+  "C3": ["C5", "C2", "M6"],
+  "C2": ["C3", "C1"],
+  "C1": ["C2", "CL5"],
+  "CL1": ["CL2", "C-Lab"],
+  "CL2": ["CL3", "CL1"],
+  "CL3": ["CL4", "CL2"],
+  "CL4": ["CL5", "CL3", "OpenAuditorium", "C-Block"],
+  "CL5": ["C1", "CL4"],
+  "OpenAuditorium": ["CL4"],
+  "C-Lab": ["CL1"],
+  "C-Block": ["CL4", "C7"],
+  "Auditorium": ["R2"],
+  "Store": ["R3"],
+  "BoysHostel": ["E1"],
+  "M6": ["C3", "M4"],
+  "M4": ["M6", "M3"],
+  "M3": ["M4", "M1"],
+  "M1": ["M-Block", "M3"],
+  "M-Block": ["M1"],
+  "FirstYearGround": ["BH4"],
+  "TennisCourt": ["EX3"],
+  "E-Block": ["E12"],
+  "BH4": ["BH3", "BH5", "FirstYearGround"],
+  "BH5": ["BH4", "BH6", "FirstYearGround2"],
+  "BH6": ["BH5", "FirstYearHostel"],
+  "FirstYearGround2": ["BH5"],
+};
+        // 4. Initialization
+        const allCoords = [];
+        for (const key in nodes) {
+            allCoords.push([nodes[key].lat, nodes[key].lon]);
+            createDraggableMarker(key, [nodes[key].lat, nodes[key].lon]);
+        }
+        redrawLines();
+
+        if (allCoords.length > 0) map.fitBounds(allCoords);
+
+        // 5. Map Click Interaction (Add Node)
+        map.on('click', function(e) {
+            if (selectedNodeName) {
+                deselectNode();
+                return; 
+            }
+            const name = prompt("Enter name for new node:");
+            if (name) {
+                if (nodes[name]) {
+                    alert("Node name exists!");
+                    return;
+                }
+                nodes[name] = { lat: e.latlng.lat, lon: e.latlng.lng };
+                adjacency[name] = []; 
+                createDraggableMarker(name, [e.latlng.lat, e.latlng.lng]);
+                redrawLines();
+            }
+        });
+
+      } catch (err) {
+        console.error(err);
+        alert("Error initializing map.");
+      }
+    };
+
+    // --- HELPER FUNCTIONS ---
+
+    function createDraggableMarker(name, latLng) {
+        const dotIcon = L.divIcon({
+            className: 'custom-node-marker',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+
+        const marker = L.marker(latLng, {
+            icon: dotIcon,
+            draggable: true,
+            title: name
+        }).addTo(map);
+
+        marker.bindTooltip(name, { permanent: true, direction: 'right', className: 'node-label' });
+        markers[name] = marker;
+
+        marker.on('drag', function(e) {
+            const newPos = e.target.getLatLng();
+            nodes[name].lat = newPos.lat;
+            nodes[name].lon = newPos.lng;
+            redrawLines();
+        });
+
+        marker.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            if (selectedNodeName === null) {
+                selectNode(name);
+            } else if (selectedNodeName === name) {
+                deselectNode();
+            } else {
+                connectNodes(selectedNodeName, name);
+                deselectNode();
+            }
+        });
+    }
+
+    function selectNode(name) {
+        selectedNodeName = name;
+        const el = markers[name].getElement();
+        if (el) {
+            el.classList.remove('custom-node-marker');
+            el.classList.add('selected-node-marker');
+        }
+    }
+
+    function deselectNode() {
+        if (!selectedNodeName) return;
+        const el = markers[selectedNodeName].getElement();
+        if (el) {
+            el.classList.remove('selected-node-marker');
+            el.classList.add('custom-node-marker');
+        }
+        selectedNodeName = null;
+    }
+
+    function connectNodes(nodeA, nodeB) {
+        if (!adjacency[nodeA]) adjacency[nodeA] = [];
+        if (!adjacency[nodeB]) adjacency[nodeB] = [];
+
+        // Add connections (Bidirectional)
+        if (!adjacency[nodeA].includes(nodeB)) adjacency[nodeA].push(nodeB);
+        if (!adjacency[nodeB].includes(nodeA)) adjacency[nodeB].push(nodeA);
+        
+        redrawLines();
+    }
+
+    // Calculate bearing between two points
+    function getBearing(lat1, lon1, lat2, lon2) {
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const lat1Rad = lat1 * Math.PI / 180;
+        const lat2Rad = lat2 * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2Rad);
+        const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+        let brng = Math.atan2(y, x) * 180 / Math.PI;
+        return (brng + 360) % 360;
+    }
+
+    function redrawLines() {
+        polylineLayerGroup.clearLayers();
+        const drawnPairs = new Set(); // To handle bidirectional visualization
+
+        for (const startNodeName in adjacency) {
+            const neighbors = adjacency[startNodeName];
+            if (!nodes[startNodeName]) continue;
+
+            neighbors.forEach(neighborName => {
+                if (nodes[neighborName]) {
+                    const start = nodes[startNodeName];
+                    const end = nodes[neighborName];
+                    const startCoords = [start.lat, start.lon];
+                    const endCoords = [end.lat, end.lon];
+
+                    // Check directionality
+                    const isReverseConnected = adjacency[neighborName] && adjacency[neighborName].includes(startNodeName);
+                    
+                    // Key for "Undirected" check (A-B is same as B-A)
+                    const pairKey = [startNodeName, neighborName].sort().join('-');
+
+                    // DRAWING LOGIC:
+                    // If we haven't processed this pair yet:
+                    if (!drawnPairs.has(pairKey)) {
+                        
+                        // 1. Draw Red Line
+                        L.polyline([startCoords, endCoords], {
+                            color: 'red',
+                            weight: 3,
+                            opacity: 0.6,
+                            interactive: false
+                        }).addTo(polylineLayerGroup);
+
+                        // 2. Draw Arrow(s) at Midpoint
+                        const midLat = (start.lat + end.lat) / 2;
+                        const midLon = (start.lon + end.lon) / 2;
+                        const bearing = getBearing(start.lat, start.lon, end.lat, end.lon);
+
+                        let arrowSymbol = '';
+                        let rotation = bearing;
+                        
+                        if (isReverseConnected) {
+                            // Two-way connection
+                            arrowSymbol = '◄►'; 
+                            // Rotation for double arrow aligns with line
+                            rotation = bearing - 90; // Adjust for text orientation
+                        } else {
+                            // One-way connection (Start -> Neighbor)
+                            arrowSymbol = '►';
+                            rotation = bearing;
+                        }
+
+                        // Create the Icon
+                        // We use a divIcon rotated via CSS
+                        const arrowIcon = L.divIcon({
+                            className: 'direction-icon',
+                            html: `<div style="transform: rotate(${rotation}deg); white-space:nowrap;">${arrowSymbol}</div>`,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        });
+
+                        L.marker([midLat, midLon], { icon: arrowIcon, interactive: false }).addTo(polylineLayerGroup);
+
+                        drawnPairs.add(pairKey);
+                    }
+                }
+            });
+        }
+    }
+
+    function exportData() {
+        const area = document.getElementById('output-area');
+        const ta = document.getElementById('code-output');
+        
+        let output = "// 1. Paste this into your 'nodes' variable:\n";
+        output += "const nodes = {\n";
+        for (const key in nodes) {
+            output += `  ${key}: { lat: ${nodes[key].lat}, lon: ${nodes[key].lon} },\n`;
+        }
+        output += "};\n\n";
+
+        output += "// 2. Paste this into your 'adjacency' variable:\n";
+        output += "const adjacency = {\n";
+        for (const key in adjacency) {
+            if (adjacency[key] && adjacency[key].length > 0) {
+                const neighbors = adjacency[key].map(n => `"${n}"`).join(", ");
+                output += `  ${key}: [${neighbors}],\n`;
+            }
+        }
+        output += "};";
+
+        ta.value = output;
+        area.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
