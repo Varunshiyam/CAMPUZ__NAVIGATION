@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Campus Navigation</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* --- RESET & BASICS --- */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: #000000;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* --- APP CONTAINER --- */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: #121212;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+    }
+
+    /* --- HEADER --- */
+    .header {
+      padding: 16px 16px 8px 16px;
+      background: #121212;
+      z-index: 20;
+      transition: all 0.3s ease;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background-color: #ffffff;
+      border-radius: 50px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .search-bar i { color: #000; font-size: 18px; margin-right: 12px; }
+    .search-bar input {
+      border: none;
+      outline: none;
+      font-size: 16px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      color: #333;
+      font-weight: 500;
+    }
+
+    /* --- CATEGORIES (Dynamic Nav Bar) --- */
+    .categories {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 12px 16px;
+      scrollbar-width: none;
+      background: #121212;
+      z-index: 10;
+      scroll-behavior: smooth; 
+      transition: height 0.3s ease, opacity 0.3s ease;
+    }
+    .categories::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #222; 
+    }
+    .chip:active { transform: scale(0.95); }
+    .chip.active { background: linear-gradient(135deg, #d4af37, #c5a028); color: black; border-color: transparent; }
+    .chip i { font-size: 12px; }
+
+    /* --- MAP WRAPPER --- */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+      min-height: 300px; 
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #242f3e;
+    }
+    
+    .leaflet-tile-pane {
+        filter: contrast(1.2) saturation(1.5) brightness(0.95);
+    }
+
+    /* Start Button */
+    .start-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #d4af37, #c5a028);
+      color: #000000;
+      padding: 14px 36px;
+      border-radius: 50px;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 1px;
+      /* Ring effect and shadow */
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5), 0 0 0 4px rgba(212, 175, 55, 0.2);
+      border: none;
+      z-index: 1000;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* Pulse Animation */
+      animation: pulse-attention 2s infinite;
+    }
+    .start-btn:active { transform: scale(0.95); }
+    
+    .start-btn i { font-size: 18px; }
+
+    @keyframes pulse-attention {
+      0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); transform: scale(1); }
+      50% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); transform: scale(1.05); }
+      100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); transform: scale(1); }
+    }
+
+    /* Stop Button Variant */
+    .start-btn.stop-mode {
+      background: linear-gradient(135deg, #ff4b4b, #d32f2f);
+      box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+      color: white;
+      padding-left: 20px;
+      padding-right: 20px;
+      animation: none; /* No pulse when active */
+    }
+
+    /* --- CONTENT SECTION --- */
+    .content-section {
+      padding: 16px 0 80px 0;
+      background: #000000;
+      overflow-y: auto;
+      transition: height 0.3s ease, opacity 0.3s ease;
+      height: auto;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px 12px 16px;
+    }
+    .section-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
+    .section-header a { color: #3B82F6; text-decoration: none; font-size: 14px; font-weight: 500; }
+
+    .cards-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding: 0 16px;
+      padding-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .cards-scroll::-webkit-scrollbar { display: none; }
+
+    .card {
+      flex: 0 0 200px;
+      height: 140px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #333;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
+    .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    .card-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 10px;
+    }
+    .card-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* --- BOTTOM NAV --- */
+    .bottom-nav {
+      position: absolute; bottom: 0; width: 100%;
+      background: rgba(25, 25, 25, 0.95); backdrop-filter: blur(10px);
+      border-top: 1px solid #333; display: flex; justify-content: space-around;
+      align-items: center; padding: 10px 0; z-index: 50;
+      transition: transform 0.3s ease;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      color: #888; font-size: 10px; gap: 4px; cursor: pointer; width: 60px;
+    }
+    .nav-item i { font-size: 20px; margin-bottom: 2px; }
+    .nav-item.active { color: #ffffff; }
+    
+    .nav-item.middle { position: relative; top: -20px; }
+    .middle-icon {
+      width: 56px; height: 56px; background: #3B82F6; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5); border: 4px solid #121212;
+    }
+    .middle-icon i { font-size: 24px; color: white; margin: 0; }
+
+    /* --- CUSTOM MAP MARKERS --- */
+    .user-loc-marker {
+      background-color: #2196F3;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(33, 150, 243, 0.4);
+      animation: pulse-blue 2s infinite;
+    }
+    @keyframes pulse-blue {
+      0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+    }
+
+    .minimal-node {
+      background-color: #333;
+      border: 2px solid #d4af37;
+      border-radius: 50%;
+      width: 8px; height: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .minimal-node.selected {
+      background-color: #dc3545;
+      transform: scale(1.8);
+      border-color: #fff;
+      z-index: 1000 !important;
+    }
+
+    /* EXPANDED MODE STYLES */
+    body.nav-active .categories {
+      height: 0; opacity: 0; padding: 0; pointer-events: none;
+    }
+    body.nav-active .content-section {
+      height: 0; padding: 0; opacity: 0;
+    }
+    body.nav-active .bottom-nav {
+      transform: translateY(100%);
+    }
+    body.nav-active .map-wrapper {
+      flex: 1; border-bottom: none;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <header class="header">
+    <div class="search-bar">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="search-input" placeholder="Search buildings...">
+    </div>
+  </header>
+
+  <nav class="categories" id="category-bar"></nav>
+
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <button id="main-btn" class="start-btn" onclick="toggleNavigation()">
+        <span>START</span> <i class="fa-solid fa-location-arrow"></i>
+    </button>
+  </div>
+
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Buildings</h2>
+      <a href="#">All <i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+    
+    <div class="cards-scroll">
+      <div class="card" onclick="focusNode('ABlock')">
+        <img src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Main Block">
+        <div class="card-overlay"><div class="card-title">Main Block (A)</div></div>
+      </div>
+      <div class="card" onclick="focusNode('Library')">
+        <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="Library">
+        <div class="card-overlay"><div class="card-title">Library</div></div>
+      </div>
+      <div class="card" onclick="focusNode('C-Block')">
+        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="C-Block">
+        <div class="card-overlay"><div class="card-title">C-Block</div></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="resetView()">
+      <i class="fa-solid fa-house"></i><span>Home</span>
+    </div>
+    <div class="nav-item" onclick="focusNode('ABlock')">
+      <i class="fa-regular fa-building"></i><span>Building</span>
+    </div>
+    <div class="nav-item middle">
+      <div class="middle-icon"><i class="fa-solid fa-bars"></i></div>
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-shapes"></i><span>Category</span>
+    </div>
+    <div class="nav-item" onclick="focusNode('Entrance')">
+      <i class="fa-regular fa-map"></i><span>Gate</span>
+    </div>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // --- 1. FULL DATA DATASET ---
+  const nodes = {
+    "EX12": { "lat": 10.880059102484713, "lon": 77.01834708452226 },
+    "EX11": { "lat": 10.88014339030873, "lon": 77.0187360048294 },
+    "EX10": { "lat": 10.88021845913193, "lon": 77.01908200979234 },
+    "EX9": { "lat": 10.880276406982512, "lon": 77.0193435251713 },
+    "EX8": { "lat": 10.880038030525, "lon": 77.01941326260568 },
+    "EX7": { "lat": 10.879887892768833, "lon": 77.0194534957409 },
+    "EX6": { "lat": 10.879711414958763, "lon": 77.01949506998064 },
+    "EX5": { "lat": 10.87946250204905, "lon": 77.01956883072855 },
+    "EX4": { "lat": 10.879274170979256, "lon": 77.01960772275926 },
+    "EX3": { "lat": 10.879155640874329, "lon": 77.01960772275926 },
+    "EX2": { "lat": 10.878836926358446, "lon": 77.01962247490884 },
+    "EX1": { "lat": 10.878603215574085, "lon": 77.01963670373154 },
+    "BH4": { "lat": 10.878447093264196, "lon": 77.0190779864788 },
+    "BH3": { "lat": 10.878439191236737, "lon": 77.01962381601335 },
+    "TurfGround": { "lat": 10.879575764033733, "lon": 77.01934218406679 },
+    "BH2": { "lat": 10.8782930036911, "lon": 77.0197592675686 },
+    "BH1": { "lat": 10.8781454990679, "lon": 77.0198705792427 },
+    "AH6": { "lat": 10.878150767091418, "lon": 77.02006235718729 },
+    "AH5": { "lat": 10.878020383482092, "lon": 77.02007979154587 },
+    "AH4": { "lat": 10.877853123616946, "lon": 77.02010259032251 },
+    "AH3": { "lat": 10.877670059562497, "lon": 77.02011331915857 },
+    "AH1": { "lat": 10.877660840506428, "lon": 77.02002212405205 },
+    "AH2": { "lat": 10.877658864994375, "lon": 77.01990578323603 },
+    "AcademicHall": { "lat": 10.877533090700057, "lon": 77.01993696391582 },
+    "E14": { "lat": 10.877332905326387, "lon": 77.02012673020363 },
+    "E15": { "lat": 10.877350026449127, "lon": 77.02034398913383 },
+    "E12": { "lat": 10.877310516164393, "lon": 77.020732909441 },
+    "E13": { "lat": 10.87719988733929, "lon": 77.02103465795518 },
+    "E11": { "lat": 10.877435632048078, "lon": 77.02081203460695 },
+    "E10": { "lat": 10.877525188648388, "lon": 77.02086433768272 },
+    "E8": { "lat": 10.8776331833365, "lon": 77.02104605734348 },
+    "E9": { "lat": 10.877679278618288, "lon": 77.0211647450924 },
+    "E7": { "lat": 10.877855757631295, "lon": 77.02102661132812 },
+    "E6": { "lat": 10.878016432462733, "lon": 77.02102795243265 },
+    "AH10": { "lat": 10.87818764325341, "lon": 77.02103734016418 },
+    "AH9": { "lat": 10.878183692236265, "lon": 77.02085629105568 },
+    "AH8": { "lat": 10.878177107207595, "lon": 77.02070340514184 },
+    "AH7": { "lat": 10.87816130313816, "lon": 77.02033191919328 },
+    "C15": { "lat": 10.878218592885837, "lon": 77.02032051980495 },
+    "C14": { "lat": 10.878300247219826, "lon": 77.02029135078193 },
+    "SnacksBox": { "lat": 10.878318685292147, "lon": 77.02035941183567 },
+    "C13": { "lat": 10.878441825245918, "lon": 77.02029705047607 },
+    "FirstYearHostel": { "lat": 10.878406266120107, "lon": 77.01888889074327 },
+    "C12": { "lat": 10.878502407450494, "lon": 77.02038623392583 },
+    "C11": { "lat": 10.878524796522976, "lon": 77.02046334743501 },
+    "C10": { "lat": 10.878707860052595, "lon": 77.02048346400261 },
+    "C9": { "lat": 10.87883429235275, "lon": 77.02056527137758 },
+    "C8": { "lat": 10.87885668140032, "lon": 77.02064573764802 },
+    "C7": { "lat": 10.878960066098141, "lon": 77.02066384255886 },
+    "C4": { "lat": 10.878840218865497, "lon": 77.02095553278924 },
+    "E1": { "lat": 10.878198179298844, "lon": 77.02129483222963 },
+    "E2": { "lat": 10.878050345377154, "lon": 77.02130187302829 },
+    "E3": { "lat": 10.877684546650038, "lon": 77.02129483222963 },
+    "E4": { "lat": 10.877402706820613, "lon": 77.02128410339357 },
+    "E5": { "lat": 10.877155108993648, "lon": 77.02128142118455 },
+    "R3": { "lat": 10.878477384367482, "lon": 77.02128008008005 },
+    "R2": { "lat": 10.878580110694848, "lon": 77.0212706923485 },
+    "R1": { "lat": 10.878735517122832, "lon": 77.02122777700426 },
+    "C6": { "lat": 10.878881704451489, "lon": 77.02119156718256 },
+    "FC": { "lat": 10.8788790704462, "lon": 77.02125594019891 },
+    "F1": { "lat": 10.879022623700436, "lon": 77.02115535736085 },
+    "C5": { "lat": 10.879130617846135, "lon": 77.02111378312112 },
+    "C3": { "lat": 10.87924387995692, "lon": 77.02112451195717 },
+    "C2": { "lat": 10.879258696218232, "lon": 77.02103566378356 },
+    "C1": { "lat": 10.879180334650062, "lon": 77.0209612324834 },
+    "CL1": { "lat": 10.879252440463546, "lon": 77.02034398913383 },
+    "CL2": { "lat": 10.879181980901718, "lon": 77.02035538852216 },
+    "CL3": { "lat": 10.879197784917032, "lon": 77.02062696218492 },
+    "CL4": { "lat": 10.879209967178257, "lon": 77.02074632048608 },
+    "CL5": { "lat": 10.879229392945142, "lon": 77.0209300518036 },
+    "OpenAuditorium": { "lat": 10.879324217009408, "lon": 77.02072218060493 },
+    "C-Lab": { "lat": 10.879308413000798, "lon": 77.02034130692483 },
+    "C-Block": { "lat": 10.879030525712425, "lon": 77.02077582478525 },
+    "M-Block": { "lat": 10.880213849643328, "lon": 77.0209689438343 },
+    "E-Block": { "lat": 10.877210423419633, "lon": 77.0206792652607 },
+    "Auditorium": { "lat": 10.878569574662913, "lon": 77.02112585306169 },
+    "Store": { "lat": 10.878472774851959, "lon": 77.02121771872045 },
+    "BoysHostel": { "lat": 10.878192911276178, "lon": 77.0214195549488 },
+    "M6": { "lat": 10.879516499047112, "lon": 77.02109903097153 },
+    "M4": { "lat": 10.879685733477688, "lon": 77.0210762321949 },
+    "M3": { "lat": 10.879947157681613, "lon": 77.02103734016418 },
+    "M1": { "lat": 10.880215825138446, "lon": 77.02102661132812 },
+    "FirstYearGround": { "lat": 10.878574842678924, "lon": 77.01951250433922 },
+    "TennisCourt": { "lat": 10.87912403283837, "lon": 77.0194521546364 },
+    "M2": { "lat": 10.880214279276725, "lon": 77.02130287885667 },
+    "L1": { "lat": 10.880214255451648, "lon": 77.0215053856373 },
+    "LBlock": { "lat": 10.880360224019858, "lon": 77.0215067267418 },
+    "EN5": { "lat": 10.880246900243678, "lon": 77.02189296483995 },
+    "Library": { "lat": 10.880447193400265, "lon": 77.02177226543428 },
+    "EN0": { "lat": 10.880256571715382, "lon": 77.02200964093208 },
+    "EN1": { "lat": 10.880304793218917, "lon": 77.02233016490938 },
+    "EN2": { "lat": 10.880381633478317, "lon": 77.02236235141756 },
+    "EN3": { "lat": 10.880446860511313, "lon": 77.02242471277715 },
+    "EN4": { "lat": 10.880431047176591, "lon": 77.0225226134062 },
+    "EN6": { "lat": 10.880287818615388, "lon": 77.02238380908967 },
+    "EN7": { "lat": 10.880291982435864, "lon": 77.02248439192773 },
+    "EN8": { "lat": 10.88033680074075, "lon": 77.02253669500352 },
+    "Entrance": { "lat": 10.880440899736866, "lon": 77.02258564531803 },
+    "L2": { "lat": 10.880124633237742, "lon": 77.0215053856373 },
+    "ML1": { "lat": 10.880125948790944, "lon": 77.02145442366601 },
+    "L3": { "lat": 10.880019358279087, "lon": 77.02149063348772 },
+    "ML2": { "lat": 10.880016754245691, "lon": 77.0214530825615 },
+    "L4": { "lat": 10.879904239910715, "lon": 77.02149834483863 },
+    "ML3": { "lat": 10.879901604470499, "lon": 77.02144302427769 },
+    "L5": { "lat": 10.879749197124072, "lon": 77.02150136232378 },
+    "L6": { "lat": 10.87971455157038, "lon": 77.02128410339357 },
+    "ML4": { "lat": 10.879797952066903, "lon": 77.02121570706369 },
+    "A3": { "lat": 10.87975680382998, "lon": 77.02179104089738 },
+    "A2": { "lat": 10.87979106456737, "lon": 77.02207535505296 },
+    "A1": { "lat": 10.879948112399843, "lon": 77.02205389738084 },
+    "A4": { "lat": 10.879870033936065, "lon": 77.02255278825761 },
+    "A5": { "lat": 10.8800680009111, "lon": 77.02252328395845 },
+    "L7": { "lat": 10.879703148368558, "lon": 77.02154427766801 },
+    "L8": { "lat": 10.879303971778334, "lon": 77.02158182859422 },
+    "L9": { "lat": 10.879269988222914, "lon": 77.02156104147436 },
+    "DBlock": { "lat": 10.879192942997335, "lon": 77.02149063348772 },
+    "L10": { "lat": 10.879248748709468, "lon": 77.02125459909439 },
+    "COE": { "lat": 10.879195606540474, "lon": 77.02125392854215 },
+    "A7": { "lat": 10.879248966023603, "lon": 77.02167570590974 },
+    "FC1": { "lat": 10.878974668699255, "lon": 77.02167302370073 },
+    "A8": { "lat": 10.879275317594333, "lon": 77.02185675501823 },
+    "ChemistryLab": { "lat": 10.879214516066734, "lon": 77.02186077833177 },
+    "A9": { "lat": 10.879288308553516, "lon": 77.0220673084259 },
+    "PhysicsLab": { "lat": 10.879237117346078, "lon": 77.02205792069437 },
+    "A10": { "lat": 10.879314922919217, "lon": 77.02218532562257 },
+    "A11": { "lat": 10.879795484123411, "lon": 77.02213570475578 },
+    "A13": { "lat": 10.87937637937702, "lon": 77.02265605330467 },
+    "A14": { "lat": 10.879321942671584, "lon": 77.0223355293274 },
+    "SeminarHall": { "lat": 10.879250785639075, "lon": 77.02232748270035 },
+    "A15": { "lat": 10.879343026233503, "lon": 77.0225501060486 },
+    "NewHall": { "lat": 10.879290268231674, "lon": 77.02255547046663 },
+    "B1": { "lat": 10.879017088561785, "lon": 77.02267080545425 },
+    "BBlock": { "lat": 10.879017128631368, "lon": 77.02260173857213 },
+    "B2": { "lat": 10.878984820626428, "lon": 77.02291488647462 },
+    "B4": { "lat": 10.878205284270726, "lon": 77.0226949453354 },
+    "B3": { "lat": 10.878223732456599, "lon": 77.02301144599916 },
+    "B6": { "lat": 10.878611144096023, "lon": 77.02298998832704 },
+    "GirlsHostel": { "lat": 10.878047156916493, "lon": 77.02298998832704 },
+    "ABlock": { "lat": 10.879522753382469, "lon": 77.02188760042192 },
+    "A17": { "lat": 10.87949639894573, "lon": 77.02157109975816 },
+    "A18": { "lat": 10.879543836930202, "lon": 77.02215582132341 },
+    "FoodCourt": { "lat": 10.878829567387074, "lon": 77.02150404453279 },
+    "BH5": { "lat": 10.878443800752768, "lon": 77.01926708221436 },
+    "BH6": { "lat": 10.87844445925505, "lon": 77.01908133924009 },
+    "FirstYearGround2": { "lat": 10.878581427698828, "lon": 77.0192925632 }
+  };
+
+  const adjacency = {
+    "EX12": ["EX11"],
+    "EX11": ["EX12", "EX10"],
+    "EX10": ["EX11", "EX9"],
+    "EX9": ["EX10", "EX8"],
+    "EX8": ["EX9", "EX7"],
+    "EX7": ["EX8", "EX6"],
+    "EX6": ["EX7", "EX5", "TurfGround"],
+    "EX5": ["EX6", "EX4"],
+    "EX4": ["EX5", "EX3"],
+    "EX3": ["EX4", "EX2", "TennisCourt"],
+    "EX2": ["EX3", "EX1"],
+    "EX1": ["EX2", "BH3"],
+    "BH3": ["EX1","BH4", "BH2", "FirstYearGround"],
+    "BH2": ["BH3", "BH1"],
+    "BH1": ["BH2", "AH6"],
+    "AH6": ["BH1", "AH5", "AH7"],
+    "AH5": ["AH6", "AH4"],
+    "AH4": ["AH5", "AH3"],
+    "AH3": ["AH4", "AH1", "E14"],
+    "AH1": ["AH3", "AH2", "AcademicHall"],
+    "AH2": ["AH1", "AcademicHall"],
+    "AcademicHall": ["AH2", "AH1"],
+    "E14": ["AH3", "E15"],
+    "E15": ["E14", "E12"],
+    "E12": ["E15", "E13", "E11", "E-Block"],
+    "E13": ["E12", "E5"],
+    "E11": ["E12", "E10"],
+    "E10": ["E11", "E8"],
+    "E8": ["E10", "E9", "E7"],
+    "E9": ["E8", "E3"],
+    "E7": ["E8", "E6"],
+    "E6": ["E7", "AH10"],
+    "AH10": ["E6", "AH9", "E1"],
+    "AH9": ["AH10", "AH8"],
+    "AH8": ["AH9", "AH7"],
+    "AH7": ["AH8", "AH6", "C15"],
+    "C15": ["AH7", "C14"],
+    "C14": ["C15", "C13", "SnacksBox"],
+    "SnacksBox": ["C14"],
+    "C13": ["C14", "C12"],
+    "FirstYearHostel": ["BH4"],
+    "BH4": ["FirstYearHostel", "BH3"],
+    "TurfGround": ["EX6"],
+    "C12": ["C13", "C11"],
+    "C11": ["C12", "C10"],
+    "C10": ["C11", "C9"],
+    "C9": ["C10", "C8"],
+    "C8": ["C9", "C7", "C4"],
+    "C7": ["C8", "C-Block"],
+    "C4": ["C8", "C6"],
+    "E1": ["AH10", "E2", "R3", "BoysHostel"],
+    "E2": ["E3", "E1"],
+    "E3": ["E4", "E9", "E2"],
+    "E4": ["E5", "E3"],
+    "E5": ["E13", "E4"],
+    "R3": ["R2", "E1", "Store"],
+    "R2": ["R1", "R3", "Auditorium"],
+    "R1": ["C6", "R2"],
+    "C6": ["C4", "FC", "F1", "R1"],
+    "FC": ["C6", "FoodCourt"],
+    "F1": ["C5", "C6"],
+    "C5": ["C3", "F1"],
+    "C3": ["C5", "C2", "M6", "L9"],
+    "C2": ["C3", "C1"],
+    "C1": ["C2", "CL5"],
+    "CL1": ["CL2", "C-Lab"],
+    "CL2": ["CL3", "CL1"],
+    "CL3": ["CL4", "CL2"],
+    "CL4": ["CL5", "CL3", "OpenAuditorium", "C-Block"],
+    "CL5": ["C1", "CL4"],
+    "OpenAuditorium": ["CL4"],
+    "C-Lab": ["CL1"],
+    "C-Block": ["CL4", "C7"],
+    "Auditorium": ["R2"],
+    "Store": ["R3"],
+    "BoysHostel": ["E1"],
+    "M6": ["C3", "M4"],
+    "M4": ["M6", "M3", "L6"],
+    "M3": ["M4", "M1"],
+    "M1": ["M-Block", "M3", "M2"],
+    "M-Block": ["M1"],
+    "FirstYearGround": ["BH3"],
+    "TennisCourt": ["EX3"],
+    "E-Block": ["E12"],
+    "M2": ["M1", "L1"],
+    "L1": ["M2", "LBlock", "EN5", "L2"],
+    "LBlock": ["L1"],
+    "EN5": ["L1", "Library", "EN0"],
+    "Library": ["EN5"],
+    "EN0": ["EN5", "EN1", "A1"],
+    "EN1": ["EN0", "EN2", "EN6"],
+    "EN2": ["EN1", "EN3"],
+    "EN3": ["EN2", "EN4"],
+    "EN4": ["EN3", "EN8", "Entrance"],
+    "EN6": ["EN1", "EN7"],
+    "EN7": ["EN6", "EN8", "A5"],
+    "EN8": ["EN7", "EN4"],
+    "Entrance": ["EN4"],
+    "L2": ["L1", "ML1", "L3"],
+    "ML1": ["L2"],
+    "L3": ["L2", "ML2", "L4"],
+    "ML2": ["L3"],
+    "L4": ["ML3", "L3", "L5"],
+    "ML3": ["L4"],
+    "L5": ["L4", "L6", "A3", "L7"],
+    "L6": ["L5", "ML4", "M4"],
+    "ML4": ["L6"],
+    "A3": ["L5", "A2", "ABlock"],
+    "A2": ["A3", "A1", "A4", "A11"],
+    "A1": ["A2", "EN0"],
+    "A4": ["A2", "A5", "A11", "A13"],
+    "A5": ["A4", "EN7"],
+    "L7": ["L5", "L8"],
+    "L8": ["L7", "L9", "A7"],
+    "L9": ["C3", "L8", "DBlock"],
+    "DBlock": ["L9"],
+    "L10": ["COE"],
+    "COE": ["L10"],
+    "A7": ["L8", "FC1", "A8"],
+    "FC1": ["A7", "FoodCourt"],
+    "A8": ["A7", "ChemistryLab", "A9", "ABlock"],
+    "ChemistryLab": ["A8"],
+    "A9": ["A8", "PhysicsLab", "A10"],
+    "PhysicsLab": ["A9"],
+    "A10": ["A9", "A11", "A14"],
+    "A11": ["A2", "A4", "A10", "ABlock"],
+    "A13": ["A4", "A15", "B1"],
+    "A14": ["A10", "SeminarHall", "A15"],
+    "SeminarHall": ["A14"],
+    "A15": ["A14", "A13", "NewHall"],
+    "NewHall": ["A15"],
+    "B1": ["A13", "BBlock", "B2", "B4"],
+    "BBlock": ["B1"],
+    "B2": ["B1", "B6"],
+    "B4": ["B1", "B3"],
+    "B3": ["B6", "B4", "GirlsHostel"],
+    "B6": ["B2", "B3"],
+    "GirlsHostel": ["B3"],
+    "ABlock": ["A8", "A11", "A17", "A3", "A18"],
+    "A17": ["ABlock"],
+    "A18": ["ABlock"],
+    "FoodCourt": ["FC1", "FC"],
+    "BH5": ["BH4", "BH6", "FirstYearGround2"],
+    "BH6": ["BH5", "FirstYearHostel"],
+    "FirstYearGround2": ["BH5"]
+  };
+
+  // List of interesting places to show in the UI (Chips)
+  const uiInterestKeys = [
+    'ABlock', 'BBlock', 'C-Block', 'DBlock', 'E-Block', 'LBlock', 'M-Block', 
+    'Library', 'Auditorium', 'AcademicHall', 'SeminarHall', 'NewHall', 
+    'FoodCourt', 'SnacksBox', 'Store', 
+    'BoysHostel', 'GirlsHostel', 'FirstYearHostel', 
+    'TurfGround', 'TennisCourt', 'FirstYearGround', 'OpenAuditorium', 
+    'C-Lab', 'ChemistryLab', 'PhysicsLab', 'COE'
+  ];
+
+  let currentSelection = null;
+  let markers = {};
+  let polylines = []; // Store the route lines (Main + Alt)
+  let isNavigating = false;
+
+  // --- 2. UI GENERATION ---
+  const categoryContainer = document.getElementById('category-bar');
+  
+  // Sort for UI
+  const sortedUiKeys = uiInterestKeys.sort((a, b) => {
+    if(a.includes("Block") && !b.includes("Block")) return -1;
+    if(!a.includes("Block") && b.includes("Block")) return 1;
+    return a.localeCompare(b);
+  });
+
+  sortedUiKeys.forEach(key => {
+    // Skip if not in nodes (safeguard)
+    if(!nodes[key]) return;
+
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.setAttribute('data-node', key);
+    
+    let iconClass = 'fa-building';
+    if(key.includes('Hostel')) iconClass = 'fa-bed';
+    if(key.includes('Ground') || key.includes('Court')) iconClass = 'fa-futbol';
+    if(key.includes('Hall') || key.includes('Auditorium')) iconClass = 'fa-landmark';
+    if(key.includes('Food') || key.includes('Snacks')) iconClass = 'fa-utensils';
+    if(key.includes('Lab')) iconClass = 'fa-flask';
+
+    chip.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${key.replace(/([A-Z])/g, ' $1').trim()}`;
+    
+    chip.onclick = () => {
+        focusNode(key);
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+    };
+    
+    categoryContainer.appendChild(chip);
+  });
+
+
+  // --- 3. MAP INIT ---
+  // Adjusted bounds and center to show more left (First Year Hostel area)
+  // Shifted west boundary from 77.019 to 77.018 to include hostel
+  const southWest = L.latLng(10.876, 77.018); 
+  const northEast = L.latLng(10.881, 77.024);
+  const bounds = L.latLngBounds(southWest, northEast);
+
+  const map = L.map('map', {
+    zoomControl: false,
+    attributionControl: false,
+    minZoom: 17,
+    maxZoom: 19,
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0
+  // Centered slightly more to the left/center of campus (77.0210) rather than Entrance (77.0225)
+  }).setView([10.8795, 77.0210], 18);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // --- 4. MAP MARKERS ---
+
+  // User Location (Entrance)
+  const userIcon = L.divIcon({
+    className: 'user-loc-marker',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+  });
+  L.marker([nodes.Entrance.lat, nodes.Entrance.lon], {icon: userIcon}).addTo(map);
+
+  // Place markers ONLY for interesting UI keys
+  uiInterestKeys.forEach(key => {
+    if(!nodes[key]) return;
+    const coords = nodes[key];
+
+    const nodeIcon = L.divIcon({
+      className: 'minimal-node',
+      html: '',
+      iconSize: [8, 8],
+      iconAnchor: [4, 4]
+    });
+
+    const marker = L.marker([coords.lat, coords.lon], {icon: nodeIcon}).addTo(map);
+    marker.bindTooltip(key, { direction: 'top', offset: [0, -5] });
+
+    marker.on('click', () => {
+      selectNode(key, marker);
+      const chip = document.querySelector(`.chip[data-node="${key}"]`);
+      if(chip) {
+          chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+      }
+    });
+
+    markers[key] = marker;
+  });
+
+  // --- 5. FUNCTIONS ---
+
+  function selectNode(key, marker) {
+    if (currentSelection && markers[currentSelection]) {
+      markers[currentSelection].getElement().classList.remove('selected');
+    }
+    currentSelection = key;
+    if(marker) {
+        const el = marker.getElement();
+        if(el) el.classList.add('selected');
+        map.setView(marker.getLatLng(), 19, { animate: true });
+    }
+  }
+
+  window.focusNode = function(nodeName) {
+    if (nodes[nodeName]) {
+      // If there is a marker (interesting place), select it
+      if(markers[nodeName]) {
+        selectNode(nodeName, markers[nodeName]);
+      } else {
+        // Even if no marker (intermediate node), set selection for routing
+        currentSelection = nodeName;
+        map.setView([nodes[nodeName].lat, nodes[nodeName].lon], 19, { animate: true });
+      }
+    } else {
+      console.warn("Node not found:", nodeName);
+    }
+  };
+
+  window.resetView = function() {
+    map.setView([nodes.Entrance.lat, nodes.Entrance.lon], 18, { animate: true });
+    if (currentSelection && markers[currentSelection]) {
+       markers[currentSelection].getElement().classList.remove('selected');
+    }
+    currentSelection = null;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    
+    // Exit nav mode
+    if(isNavigating) toggleNavigation();
+  };
+
+  // --- 6. PATHFINDING LOGIC (A*) ---
+
+  function getDist(p1, p2) {
+      const R = 6371e3;
+      const rad = Math.PI/180;
+      const dLat = (p2.lat - p1.lat)*rad;
+      const dLon = (p2.lon - p1.lon)*rad;
+      const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*rad)*Math.cos(p2.lat*rad)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.asin(Math.sqrt(a));
+  }
+
+  // Updated Build Graph to handle Penalties (for Alt Path)
+  function buildGraph(penalizedEdges = []) {
+      const graph = {};
+      
+      // Helper to check if an edge is in the penalty list
+      const isPenalized = (u, v) => {
+          return penalizedEdges.some(edge => 
+              (edge[0] === u && edge[1] === v) || (edge[0] === v && edge[1] === u)
+          );
+      };
+
+      for (const node in adjacency) {
+          graph[node] = adjacency[node].map(neighbor => {
+             let dist = getDist(nodes[node], nodes[neighbor]);
+             
+             // If this edge is penalized, increase its cost significantly
+             if (isPenalized(node, neighbor)) {
+                 dist *= 3.0; // Penalty Factor (3x)
+             }
+             
+             return { to: neighbor, distance: dist };
+          });
+      }
+      return graph;
+  }
+
+  // Refactored A* to accept a custom graph
+  function astar(start, goal, customGraph = null) {
+      const graph = customGraph || buildGraph(); // Use standard graph if none provided
+      const gScore = {}, fScore = {}, cameFrom = {};
+      
+      for (const n in nodes) { gScore[n] = Infinity; fScore[n] = Infinity; }
+      gScore[start] = 0;
+      fScore[start] = getDist(nodes[start], nodes[goal]);
+      
+      const openSet = [start];
+      while (openSet.length > 0) {
+          openSet.sort((a, b) => fScore[a] - fScore[b]);
+          const current = openSet.shift();
+          
+          if (current === goal) {
+              const path = [];
+              let cur = current;
+              while (cameFrom[cur]) { path.push(cur); cur = cameFrom[cur]; }
+              path.push(start);
+              return path.reverse();
+          }
+          
+          if (!graph[current]) continue;
+          
+          for (const edge of graph[current]) {
+              const tentative = gScore[current] + edge.distance;
+              if (tentative < gScore[edge.to]) {
+                  cameFrom[edge.to] = current;
+                  gScore[edge.to] = tentative;
+                  fScore[edge.to] = tentative + getDist(nodes[edge.to], nodes[goal]);
+                  if (!openSet.includes(edge.to)) openSet.push(edge.to);
+              }
+          }
+      }
+      return []; // No path found
+  }
+
+  function drawRoutes(mainPath, altPath) {
+    // Clear previous lines
+    polylines.forEach(p => map.removeLayer(p));
+    polylines = [];
+    
+    // Draw Alternative Path FIRST (so it is behind)
+    if(altPath && altPath.length > 0) {
+        const altLatlngs = altPath.map(id => [nodes[id].lat, nodes[id].lon]);
+        const altPoly = L.polyline(altLatlngs, {
+            color: '#808080', // Grey
+            weight: 4,
+            opacity: 0.5, // Semi-transparent
+            lineCap: 'round',
+            lineJoin: 'round',
+            dashArray: '5, 5' // Optional dashed effect for secondary look
+        }).addTo(map);
+        polylines.push(altPoly);
+    }
+    
+    // Draw Main Path SECOND (so it is on top)
+    if(mainPath && mainPath.length > 0) {
+        const mainLatlngs = mainPath.map(id => [nodes[id].lat, nodes[id].lon]);
+        const mainPoly = L.polyline(mainLatlngs, {
+            color: 'red',
+            weight: 5, 
+            opacity: 0.8,
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(map);
+        polylines.push(mainPoly);
+        
+        // Fit bounds to main path + padding
+        map.fitBounds(mainPoly.getBounds(), { padding: [50, 50] });
+    }
+  }
+
+  // --- 7. NAVIGATION CONTROL ---
+
+  window.toggleNavigation = function() {
+    const btn = document.getElementById('main-btn');
+    const body = document.body;
+
+    if (!isNavigating) {
+      // STARTING NAV
+      if(!currentSelection) {
+        alert("Please select a destination building first.");
+        return;
+      }
+      
+      const startNode = "Entrance"; // Simulating user location
+      
+      // 1. Calculate Primary Path (Standard A*)
+      const path1 = astar(startNode, currentSelection);
+      
+      if(path1.length === 0) {
+          alert("No route found to " + currentSelection);
+          return;
+      }
+
+      // 2. Calculate Alternative Path
+      // Identify edges used in path1
+      const penalizedEdges = [];
+      for(let i=0; i<path1.length-1; i++) {
+          penalizedEdges.push([path1[i], path1[i+1]]);
+      }
+      
+      // Build a graph where these edges are 3x more expensive
+      const penalizedGraph = buildGraph(penalizedEdges);
+      
+      // Run A* on the penalized graph
+      const path2 = astar(startNode, currentSelection, penalizedGraph);
+      
+      // Only show Alt path if it exists AND is actually different from Path 1
+      let finalAltPath = null;
+      if(path2.length > 0 && JSON.stringify(path1) !== JSON.stringify(path2)) {
+          finalAltPath = path2;
+      }
+
+      isNavigating = true;
+      body.classList.add('nav-active');
+      
+      // Draw Both Routes
+      drawRoutes(path1, finalAltPath);
+
+      // Change Button Style
+      btn.innerHTML = '<span>STOP</span> <i class="fa-solid fa-xmark"></i>';
+      btn.classList.add('stop-mode');
+
+      setTimeout(() => { map.invalidateSize(); }, 350); 
+
+    } else {
+      // STOPPING NAV
+      isNavigating = false;
+      body.classList.remove('nav-active');
+
+      // Clear all lines
+      polylines.forEach(p => map.removeLayer(p));
+      polylines = [];
+
+      // Revert Button Style
+      btn.innerHTML = '<span>START</span> <i class="fa-solid fa-location-arrow"></i>';
+      btn.classList.remove('stop-mode');
+      
+      setTimeout(() => { map.invalidateSize(); }, 350);
+    }
+  };
+
+  // Search
+  const searchInput = document.getElementById('search-input');
+  searchInput.addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+      const term = this.value.toLowerCase();
+      // Search in uiInterestKeys first
+      const match = uiInterestKeys.find(key => key.toLowerCase().includes(term));
+      
+      if (match) {
+        focusNode(match);
+        const chip = document.querySelector(`.chip[data-node="${match}"]`);
+        if(chip) {
+            chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+        }
+        this.blur();
+      } else {
+        alert("Building not found.");
+      }
+    }
+  });
+
+</script>
+
+</body>
+</html>
