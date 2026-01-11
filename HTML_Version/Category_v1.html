@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Campus Categories</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- 1. Global Theme Variables (Matches Home.html) --- */
+        :root {
+            --bg-body: #000000;
+            --bg-element: #121212;
+            --bg-card: #1c1c1e;
+            --bg-card-hover: #2c2c2e;
+            --text-main: #ffffff;
+            --text-sub: #8e8e93;
+            
+            /* Theme Colors */
+            --accent-gold: #d4af37;
+            --accent-gold-dark: #c5a028;
+            --accent-blue: #3B82F6; 
+            
+            --nav-height: 70px;
+            --border-color: #2c2c2e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: var(--bg-body);
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- 2. Header --- */
+        .header-section {
+            background-color: var(--bg-element);
+            padding: 20px 20px 15px 20px;
+            z-index: 20;
+            border-bottom: 1px solid #222;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .page-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+        }
+
+        /* --- 3. Scrollable Content Area --- */
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for nav */
+        }
+
+        /* --- 4. Animated Category Cards --- */
+        
+        /* Section Titles */
+        .section-heading {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* The Accordion Card */
+        .cat-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #333;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Stagger Animations */
+        .cat-card:nth-child(1) { animation-delay: 0.1s; }
+        .cat-card:nth-child(2) { animation-delay: 0.2s; }
+        .cat-card:nth-child(3) { animation-delay: 0.3s; }
+        .cat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Header (Clickable) */
+        .cat-header {
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: linear-gradient(to right, var(--bg-card), var(--bg-card));
+        }
+        .cat-header:active { background-color: var(--bg-card-hover); }
+
+        .cat-icon-box {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        /* Specific Icon Colors */
+        .icon-dept { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+        .icon-class { background: rgba(212, 175, 55, 0.15); color: #d4af37; }
+        .icon-lab { background: rgba(48, 209, 88, 0.15); color: #30d158; }
+        .icon-hall { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
+
+        .cat-title {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .cat-toggle {
+            color: var(--text-sub);
+            transition: transform 0.3s;
+        }
+        .cat-card.open .cat-toggle { transform: rotate(180deg); }
+
+        /* Card Body (Hidden by default) */
+        .cat-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background-color: #151515;
+        }
+
+        /* --- 5. Block-Wise List Items --- */
+        .block-group {
+            padding: 0 20px;
+        }
+        
+        .block-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #2c2c2e;
+        }
+        .block-item:last-child { border-bottom: none; }
+
+        .block-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .block-name::before {
+            content: ''; display: block; width: 4px; height: 14px;
+            background-color: var(--accent-gold); border-radius: 2px;
+        }
+
+        .item-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-left: 12px;
+        }
+
+        .item-tag {
+            font-size: 0.75rem;
+            background-color: #2c2c2e;
+            color: #ccc;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #3a3a3c;
+        }
+        .item-tag.highlight {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Department specific style */
+        .dept-desc {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-left: 12px;
+            line-height: 1.4;
+        }
+
+        /* --- 6. Bottom Navigation (Exact Match) --- */
+        .bottom-nav {
+            position: absolute; bottom: 0; width: 100%;
+            background: rgba(25, 25, 25, 0.95); backdrop-filter: blur(10px);
+            border-top: 1px solid #333; display: flex; justify-content: space-around;
+            align-items: center; padding: 10px 0; z-index: 50;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #888; font-size: 10px; gap: 4px; cursor: pointer; width: 60px;
+            text-decoration: none;
+        }
+        .nav-item i { font-size: 20px; margin-bottom: 2px; }
+        .nav-item.active { color: #ffffff; }
+        .nav-item.middle { position: relative; top: -20px; }
+        .middle-icon {
+            width: 56px; height: 56px; background: var(--accent-blue); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5); border: 4px solid #121212;
+        }
+        .middle-icon i { font-size: 24px; color: white; margin: 0; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div class="header-section">
+        <div class="page-title">Categories</div>
+        <div class="page-subtitle">Explore Departments, Labs & Infrastructure</div>
+    </div>
+
+    <div class="scroll-content">
+        
+        <div class="section-heading">Academic</div>
+
+        <!-- 1. DEPARTMENTS CARD -->
+        <div class="cat-card">
+            <div class="cat-header" onclick="toggleCard(this)">
+                <div class="cat-icon-box icon-dept"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="cat-title">Departments</div>
+                <i class="fa-solid fa-chevron-down cat-toggle"></i>
+            </div>
+            <div class="cat-body">
+                <div class="block-group">
+                    <!-- Dynamic Content via JS -->
+                    <div id="dept-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. CLASSROOMS CARD -->
+        <div class="cat-card">
+            <div class="cat-header" onclick="toggleCard(this)">
+                <div class="cat-icon-box icon-class"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="cat-title">Classrooms</div>
+                <i class="fa-solid fa-chevron-down cat-toggle"></i>
+            </div>
+            <div class="cat-body">
+                <div class="block-group">
+                    <div id="class-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-heading">Infrastructure</div>
+
+        <!-- 3. LABS CARD -->
+        <div class="cat-card">
+            <div class="cat-header" onclick="toggleCard(this)">
+                <div class="cat-icon-box icon-lab"><i class="fa-solid fa-flask"></i></div>
+                <div class="cat-title">Laboratories</div>
+                <i class="fa-solid fa-chevron-down cat-toggle"></i>
+            </div>
+            <div class="cat-body">
+                <div class="block-group">
+                    <div id="lab-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. HALLS CARD -->
+        <div class="cat-card">
+            <div class="cat-header" onclick="toggleCard(this)">
+                <div class="cat-icon-box icon-hall"><i class="fa-solid fa-people-roof"></i></div>
+                <div class="cat-title">Meeting Halls</div>
+                <i class="fa-solid fa-chevron-down cat-toggle"></i>
+            </div>
+            <div class="cat-body">
+                <div class="block-group">
+                    <!-- Static Content for Halls -->
+                    <div class="block-item">
+                        <div class="block-name">Main Campus</div>
+                        <div class="item-list">
+                            <span class="item-tag highlight">Auditorium</span>
+                            <span class="item-tag">Seminar Hall</span>
+                            <span class="item-tag">New Hall</span>
+                            <span class="item-tag">Open Air Theatre</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-house"></i><span>Home</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-regular fa-building"></i><span>Building</span>
+        </a>
+        <div class="nav-item middle">
+            <div class="middle-icon"><i class="fa-solid fa-bars"></i></div>
+        </div>
+        <!-- Active Class Here -->
+        <a href="#" class="nav-item active">
+            <i class="fa-solid fa-shapes"></i><span>Category</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-regular fa-map"></i><span>Gate</span>
+        </a>
+    </nav>
+
+</div>
+
+<script>
+    // --- DATA CONFIGURATION ---
+    const blocks = [
+        { id: 'A', name: 'A-Block', dept: 'First Year (Science & Humanities)', labs: ['Physics Lab', 'Chemistry Lab'] },
+        { id: 'B', name: 'B-Block', dept: 'MBA (Master of Business Admin)', labs: ['Business Analytics Lab', 'Communication Lab'] },
+        { id: 'C', name: 'C-Block', dept: 'CSE & IT Departments', labs: ['C-Lab', 'Python Lab', 'AI Research Center'] },
+        { id: 'D', name: 'D-Block', dept: 'ECE & EEE Departments', labs: ['Circuit Lab', 'Power Electronics', 'Microprocessor'] },
+        { id: 'E', name: 'E-Block', dept: 'Mechanical & Civil Engineering', labs: ['Fluid Mechanics', 'CAD/CAM Lab', 'Concrete Lab'] }
+    ];
+
+    // --- 1. GENERATE DEPARTMENTS ---
+    const deptContainer = document.getElementById('dept-container');
+    blocks.forEach(block => {
+        deptContainer.innerHTML += `
+            <div class="block-item">
+                <div class="block-name">${block.name}</div>
+                <div class="dept-desc">${block.dept}</div>
+            </div>
+        `;
+    });
+
+    // --- 2. GENERATE CLASSROOMS (LOGIC: 100s & 200s) ---
+    const classContainer = document.getElementById('class-container');
+    
+    function generateRoomNumbers(blockId) {
+        let html = '';
+        // Ground Floor (100 Series) - generate 4 rooms
+        for(let i=1; i<=4; i++) {
+            html += `<span class="item-tag">${blockId}10${i}</span>`;
+        }
+        // First Floor (200 Series) - generate 4 rooms
+        for(let i=1; i<=4; i++) {
+            html += `<span class="item-tag">${blockId}20${i}</span>`;
+        }
+        return html;
+    }
+
+    blocks.forEach(block => {
+        classContainer.innerHTML += `
+            <div class="block-item">
+                <div class="block-name">${block.name}</div>
+                <div class="item-list">
+                    ${generateRoomNumbers(block.id)}
+                </div>
+            </div>
+        `;
+    });
+
+    // --- 3. GENERATE LABS ---
+    const labContainer = document.getElementById('lab-container');
+    blocks.forEach(block => {
+        const labsHtml = block.labs.map(lab => `<span class="item-tag highlight">${lab}</span>`).join('');
+        labContainer.innerHTML += `
+            <div class="block-item">
+                <div class="block-name">${block.name}</div>
+                <div class="item-list">
+                    ${labsHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    // --- 4. ACCORDION LOGIC ---
+    function toggleCard(header) {
+        const card = header.parentElement;
+        const body = card.querySelector('.cat-body');
+        
+        // Close others (Optional - remove this block if you want multiple open)
+        document.querySelectorAll('.cat-card.open').forEach(otherCard => {
+            if(otherCard !== card) {
+                otherCard.classList.remove('open');
+                otherCard.querySelector('.cat-body').style.maxHeight = null;
+            }
+        });
+
+        // Toggle current
+        card.classList.toggle('open');
+        
+        if (card.classList.contains('open')) {
+            body.style.maxHeight = body.scrollHeight + "px";
+        } else {
+            body.style.maxHeight = null;
+        }
+    }
+</script>
+
+</body>
+</html>
