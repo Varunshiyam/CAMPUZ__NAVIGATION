@@ -1,0 +1,60 @@
+.room-type-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-wrapper:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.icon-wrapper .icon {
+    color: white;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Size variants */
+.room-icon-small .icon-wrapper {
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+}
+
+.room-icon-small .icon {
+    font-size: 14px;
+}
+
+.room-icon-medium .icon-wrapper {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+}
+
+.room-icon-medium .icon {
+    font-size: 18px;
+}
+
+.room-icon-large .icon-wrapper {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+}
+
+.room-icon-large .icon {
+    font-size: 22px;
+}
+
+.icon-label {
+    font-size: 18px;
+    line-height: 1;
+}

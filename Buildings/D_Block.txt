@@ -1,0 +1,33 @@
+Laboratory:
+DBLOCK:
+1-Floor:
+Laboratory - D202 (Steven Paul - Steve Jobs Laboratory)
+
+FacultyRoom:
+DBLOCK:
+0-floor:Departments - D102 (Civil Engineering)
+1-floor:Faculty Room[D201, D206]
+3-floor:Faculty Room: D401 (AI & DS)
+
+OfficeRooms:
+DBLOCK:
+
+0-floor:COE Office:D104
+1-Floor:COE Valuation Room[D207, D208]
+1-Floor:COE Rooms
+2-Floor:COE Record Rooms[D307, D308]
+
+RESTROOMS:
+DBLOCK:
+3-Floor:Gents Rest Room
+
+CLASSROOMS:
+1-Floor:
+Class Rooms - D202, D204
+2-Floor:
+Class Rooms - D302, D303, D304
+3-Floor:
+Class Rooms- D402, D404, D407, D408
+
+Cells:
+Exam Cell: Dblock:0-Floor:D101

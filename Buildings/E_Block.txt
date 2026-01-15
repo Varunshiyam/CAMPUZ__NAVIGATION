@@ -1,0 +1,78 @@
+Laboratory:
+EBLOCK:
+0-Floor:
+Laboratory - E104(Digital Electronics)
+Laboratory - E106(Electrical Machines lab-II)
+Laboratory - E107(Electrical Machines lab-I)
+1-Floor:
+Laboratory - E204(Power Electronics and Drivers lab / Measurements and instrumentation)
+Laboratory - E206(Power System Simulation Lab)
+Laboratory - E209(Control Systems Lab/ Linear Integrated Circuits)
+Laboratory - E210(Lab View Academy)
+2-Floor:
+Laboratory - E304 (ELECTRIC CIRCUITS LABORATORY)
+Laboratory - E305 (MICROPROCESSORS AND MICROCONTROLLERS LABORATORY)
+Laboratory - E308 (ELECTRONIC DEVICES AND CIRCUITS LABORATORY -I)
+Laboratory - E309 (PROJECT / RESEARCH LABORATORY)
+3-Floor:
+Laboratory - E404 (ELECTRONIC DEVICES AND CIRCUITS LABORATORY -II)
+Laboratory - E407 (VLSI / DSP LABORATORY)
+Laboratory - E408 (MICROWAVE / OPTICAL LABORATORY)
+Laboratory - E409 (COMMUNICATION LABORATORY)
+4-Floor:
+Laboratory - E504 (LIC / DIGITAL LABORATORY)
+Laboratory - E506 (NETWORKS LABORATORY)
+
+FacultyRoom:
+EBLOCK:
+0-floor:Faculty Room: E105, E108, E109 (CYBER HoD Cabin)
+1-floor:Departments - E211 (EEE HoD Cabin)
+1-floor:Faculty Room[E205, E208]
+2-floor:Departments - E310 (ECE HoD Cabin)
+2-floor:Faculty Rooms - E306, E307-B, E307-C (ECE PROFESSOR), E311-B
+3-floor:Departments - E417
+3-floor:Faculty Rooms - E405, E410, E411, E412, E413, E416
+4-floor:Faculty Rooms - E505 (ETE PROFESSOR),E510, E511
+
+OfficeRooms:
+EBLOCK:
+0-Floor:Store Room:E106(A)
+0-Floor:Power Room:E107(A)
+1-Floor:Store Room[E207]
+1-floor:UPS Room[E207 (A)]
+1-Floor:Department Library (EEE)[E212]
+2-Floor:ECE Store Room[E311-A]
+2-Floor:ECE Meeting and Counseling Room[E307-A]
+3-Floor:ECE Department Library[E414]
+3-Floor:ECE Store Room II[E406]
+
+HALLS:
+EBLOCK:
+4-floor:ECE Seminar Hall - E512
+
+RESTROOMS:
+EBLOCK:
+0-Floor:Gents Restroom
+1-Floor:Ladies Rest Room
+2-Floor:Gents Rest Room
+3-Floor:Ladies Rest Room
+4-Floor:Gents Rest Room
+
+CLASSROOMS:
+0-Floor:
+Class Rooms: E101, E102, E103
+1-Floor:
+Class Rooms - E201, E202, E203
+2-Floor:
+Class Rooms - E301, E302, E303
+3-Floor:
+ClassRooms- E401, E402, E403, E415, E418
+4-Floor:
+ClassRooms- E501, E502, E503, E415, E507, E508, E509
+5-Floor:
+ClassRooms- E601, E602
+
+Cells:
+Karpagam Innovation Centre: E311
+Karpagam Startup: Eblock:2-Floor
+Karpagam Startup: Eblock:3-Floor
