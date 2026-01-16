@@ -575,6 +575,54 @@ body {
 
 /* ================= LARGE SCREEN (TOP NAVBAR) ================= */
 
+/* ================= BOTTOM NAVIGATION ================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 70px;
+  background: #141414;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  color: #8E8E93;
+  font-size: 12px;
+}
+
+.bottom-nav .nav-item:hover {
+  background: #1c1c1e;
+}
+
+.bottom-nav .nav-item.active {
+  color: #0a84ff;
+}
+
+.bottom-nav .nav-item svg {
+  font-size: 20px;
+}
+
+.bottom-nav .nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+}
 
 /* ================= BLUE DOT MARKERS ================= */
 .blue-dot-marker {

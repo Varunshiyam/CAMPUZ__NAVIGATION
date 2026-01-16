@@ -4,7 +4,7 @@ import {
   FaSearch,
   FaHome,
   FaThLarge,
-  FaMap,
+  FaCompass,
   FaBuilding,
   FaChevronRight,
   FaChevronDown
@@ -225,8 +225,7 @@ export default function BuildingsPage() {
             }`}
           onClick={() => navigate("/buildings")}
         >
-          <div className="center-btn"><FaBuilding /></div>
-
+          <FaBuilding />
           <span>Building</span>
         </div>
 
@@ -240,11 +239,11 @@ export default function BuildingsPage() {
         </div>
 
         <div
-          className={`nav-item ${location.pathname === "/map" ? "active" : ""}`}
-          onClick={() => navigate("/map")}
+          className={`nav-item ${location.pathname === "/explore" ? "active" : ""}`}
+          onClick={() => navigate("/explore")}
         >
-          <FaMap />
-          <span>Map</span>
+          <FaCompass />
+          <span>Explore</span>
         </div>
       </nav>
     </div>

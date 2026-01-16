@@ -1,11 +1,15 @@
 :root {
-    --bg-body: #0a0a1a;
-    --bg-element: #1c1c2e;
-    --bg-sub-item: #141424;
+    --bg-body: #0a0a0f;
+    --bg-element: #1a1a24;
+    --bg-sub-item: #12121c;
     --text-main: #ffffff;
-    --text-sub: #a0a0b0;
-    --accent-blue: #3a82e0;
-    --border-color: #2c2c40;
+    --text-sub: #9a9aaa;
+    --accent-gold: #d4af37;
+    --accent-gold-light: #f4d03f;
+    --accent-gold-dark: #b8941f;
+    --border-color: #2a2a38;
+    --glass-bg: rgba(212, 175, 55, 0.1);
+    --glass-border: rgba(212, 175, 55, 0.3);
     --nav-height: 70px;
 }
 
@@ -19,18 +23,25 @@
 body {
     background-color: var(--bg-body);
     color: var(--text-main);
-    min-height: 100vh;
+    /* Allow normal scrolling for other pages */
+}
+
+.categories-page {
     display: flex;
     flex-direction: column;
-    padding-bottom: var(--nav-height);
+    height: 100vh;
+    height: 100dvh;
+    /* Dynamic viewport height for mobile */
+    overflow: hidden;
+    position: relative;
 }
 
 /* --- 2. Header Section --- */
 .header-section {
     background-color: var(--bg-body);
     padding: 20px 15px 0 15px;
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
+    /* Don't shrink */
     z-index: 100;
     border-bottom: 1px solid var(--border-color);
 }
@@ -93,12 +104,13 @@ body {
 
 .top-chip i {
     margin-right: 5px;
-    color: var(--accent-blue);
+    color: var(--accent-gold);
 }
 
 .top-chip.active {
-    background-color: var(--accent-blue);
-    border-color: var(--accent-blue);
+    background: linear-gradient(135deg, var(--accent-gold-dark) 0%, var(--accent-gold) 100%);
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .top-chip.active i {
@@ -109,7 +121,30 @@ body {
 .main-list-container {
     flex: 1;
     overflow-y: auto;
-    padding-top: 10px;
+    overflow-x: hidden;
+    padding: 10px 15px;
+    padding-bottom: calc(var(--nav-height) + 20px);
+    /* Extra padding for bottom nav */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar for main container for cleaner look */
+.main-list-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.main-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-list-container::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
+}
+
+.main-list-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
 }
 
 .list-item {
@@ -125,20 +160,88 @@ body {
     background-color: var(--bg-element);
 }
 
+/* --- Category Buttons --- */
+.category-buttons {
+    display: flex;
+    gap: 8px;
+    margin-right: 12px;
+    z-index: 10;
+}
+
+.glass-button {
+    position: relative;
+    padding: 8px 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--accent-gold-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    outline: none;
+}
+
+.glass-button:hover {
+    transform: translateY(-2px);
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    color: var(--accent-gold);
+}
+
+.glass-button:active {
+    transform: translateY(0);
+    background: rgba(212, 175, 55, 0.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.start-button {
+    background: linear-gradient(135deg,
+            rgba(212, 175, 55, 0.15) 0%,
+            rgba(244, 208, 63, 0.1) 100%);
+}
+
+.start-button:hover {
+    background: linear-gradient(135deg,
+            rgba(212, 175, 55, 0.25) 0%,
+            rgba(244, 208, 63, 0.2) 100%);
+}
+
+.explore-button {
+    background: rgba(212, 175, 55, 0.08);
+    opacity: 0.9;
+}
+
+.explore-button:hover {
+    background: rgba(212, 175, 55, 0.15);
+    opacity: 1;
+}
+
+
 .sub-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 12px 16px 12px 16px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     margin-bottom: 6px;
+    margin-left: 55px;
+    margin-right: 10px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sub-item:hover {
-    background: rgba(10, 132, 255, 0.15);
+    background: rgba(212, 175, 55, 0.12);
     transform: translateX(4px);
 }
 
@@ -165,9 +268,90 @@ body {
     font-weight: 500;
 }
 
+.sub-item-buttons {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.sub-item-buttons .glass-button {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+}
+
+
+/* --- Flat List Items (for filtered views) --- */
+.flat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+.flat-item:hover {
+    background: rgba(212, 175, 55, 0.12);
+    transform: translateX(4px);
+}
+
+.flat-item:last-child {
+    margin-bottom: 0;
+}
+
+.flat-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.flat-item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+}
+
+.flat-item-context {
+    font-size: 12px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.flat-item-buttons {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.flat-item-buttons .glass-button {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+}
+
+/* Fade in animation for flat items */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
 .item-icon {
     font-size: 1.4rem;
-    color: var(--accent-blue);
+    color: var(--accent-gold);
     width: 40px;
     text-align: center;
     margin-right: 15px;
@@ -190,11 +374,47 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 10px;
 }
 
 .sub-list.open {
-    max-height: 1000px;
+    max-height: 60vh;
+    /* Limit height to 60% of viewport */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
+    overflow-x: hidden;
     border-bottom: 1px solid var(--border-color);
+    padding: 10px;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* iOS smooth scrolling */
+}
+
+/* Custom Scrollbar Styling */
+.sub-list.open::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sub-list.open::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.sub-list.open::-webkit-scrollbar-thumb {
+    background: var(--accent-gold);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.sub-list.open::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-gold-light);
+}
+
+/* Firefox scrollbar */
+.sub-list.open {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-gold) rgba(255, 255, 255, 0.05);
 }
 
 .sub-item {
@@ -222,8 +442,10 @@ body {
 
 /* --- 4. Bottom Nav --- */
 .bottom-nav {
-    position: fixed;
-    bottom: 0;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100%;
     height: var(--nav-height);
     background-color: rgba(20, 20, 20, 0.95);
@@ -246,7 +468,7 @@ body {
 }
 
 .nav-center-btn {
-    background-color: var(--accent-blue);
+    background: linear-gradient(135deg, var(--accent-gold-dark) 0%, var(--accent-gold) 100%);
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -254,7 +476,7 @@ body {
     align-items: center;
     justify-content: center;
     margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(58, 130, 224, 0.3);
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
 }
 
 .nav-center-btn i {
@@ -263,5 +485,103 @@ body {
 }
 
 .nav-item.active {
-    color: var(--accent-blue);
+    color: var(--accent-gold);
+}
+
+/* ========================================
+   MOBILE RESPONSIVE OPTIMIZATIONS
+   ======================================== */
+@media (max-width: 768px) {
+    .sub-list.open {
+        max-height: 50vh;
+        /* Smaller on mobile for better UX */
+    }
+
+    .glass-button {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    .sub-item-buttons .glass-button {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+
+    .flat-item-buttons .glass-button {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+
+    .category-buttons {
+        gap: 6px;
+    }
+
+    .sub-item {
+        margin-left: 35px;
+        padding: 10px 12px;
+    }
+
+    .sub-item-content {
+        font-size: 0.85rem;
+    }
+
+    .top-chip {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .header-section {
+        padding: 15px 12px 0 12px;
+    }
+
+    .main-list-container {
+        padding: 10px 12px;
+        padding-bottom: calc(var(--nav-height) + 15px);
+    }
+
+    .flat-item {
+        padding: 12px 14px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .sub-list.open {
+        max-height: 45vh;
+    }
+
+    .sub-item {
+        margin-left: 20px;
+        margin-right: 5px;
+    }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+/* GPU acceleration for smooth animations */
+.list-item,
+.sub-item,
+.glass-button,
+.top-chip {
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Prevent layout shift during animations */
+.sub-list {
+    contain: layout style paint;
+}
+
+/* Optimize rendering for high traffic */
+.categories-page {
+    contain: layout style;
+}
+
+/* Reduce repaints */
+.glass-button:hover,
+.sub-item:hover,
+.top-chip:hover {
+    will-change: transform, background;
 }

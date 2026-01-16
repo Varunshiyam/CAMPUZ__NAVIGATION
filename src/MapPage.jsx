@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "./MapPage.css";
 import { nodes, locationData } from "./data";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaHome, FaThLarge, FaMap, FaBuilding } from "react-icons/fa";
+import { FaHome, FaThLarge, FaCompass, FaBuilding } from "react-icons/fa";
 import { formatRoomLocation } from "./utils/roomUtils";
 
 /* ---------- FIX LEAFLET ICON ---------- */
@@ -549,9 +549,7 @@ export default function MapPage() {
             }`}
           onClick={() => navigate("/buildings")}
         >
-          <div className="center-btn">
-            <FaBuilding />
-          </div>
+          <FaBuilding />
           <span>Building</span>
         </div>
 
@@ -565,12 +563,12 @@ export default function MapPage() {
         </div>
 
         <div
-          className={`nav-item ${location.pathname === "/map" ? "active" : ""
+          className={`nav-item ${location.pathname === "/explore" ? "active" : ""
             }`}
-          onClick={() => navigate("/map")}
+          onClick={() => navigate("/explore")}
         >
-          <FaMap />
-          <span>Map</span>
+          <FaCompass />
+          <span>Explore</span>
         </div>
       </nav>
     </div>

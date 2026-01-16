@@ -3,6 +3,8 @@ import BuildingsPage from "./BuildingsPage";
 import MapPage from "./MapPage";
 import CategoriesPage from "./CategoriesPage";
 import CampusMap from "./CampusMap";
+import ExplorePage from "./ExplorePage";
+
 function App() {
   return (
     <Routes>
@@ -10,8 +12,8 @@ function App() {
       <Route path="/buildings" element={<BuildingsPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/map" element={<CampusMap />} />
+      <Route path="/explore" element={<ExplorePage />} />
     </Routes>
-    /* <CampusMap/> */
   );
 }
 

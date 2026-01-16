@@ -15,7 +15,7 @@ import {
   FaChevronRight,
   FaExternalLinkAlt,
   FaHome,
-  FaMap,
+  FaCompass,
   FaUserTie,
   FaBriefcase
 } from "react-icons/fa";
@@ -27,7 +27,8 @@ import { formatRoomLocation } from "./utils/roomUtils";
 const CATEGORY_CONFIG = {
   hall: { title: "Halls & Auditoriums", icon: <FaUniversity /> },
   sports: { title: "Sports & Grounds", icon: <FaRunning /> },
-  block: { title: "Academic Blocks & Bldgs", icon: <FaBuilding /> },
+  block: { title: "Academic Blocks", icon: <FaBuilding /> },
+  library: { title: "Library", icon: <FaGraduationCap /> },
   lab: { title: "Labs & Centres", icon: <FaFlask /> },
   food: { title: "Food & Snacks", icon: <FaUtensils /> },
   hostel: { title: "Hostels", icon: <FaHome /> },
@@ -35,7 +36,7 @@ const CATEGORY_CONFIG = {
   office: { title: "Offices & Cells", icon: <FaBriefcase /> },
   cell: { title: "Special Cells", icon: <FaBriefcase /> },
   classroom: { title: "Classrooms", icon: <FaChalkboard /> },
-  other: { title: "General", icon: <FaMap /> }
+  other: { title: "General", icon: <FaCompass /> }
 };
 
 const FILTERS = [
@@ -43,6 +44,7 @@ const FILTERS = [
   { label: "Halls", value: "hall", icon: <FaUniversity /> },
   { label: "Sports", value: "sports", icon: <FaRunning /> },
   { label: "Blocks", value: "block", icon: <FaBuilding /> },
+  { label: "Library", value: "library", icon: <FaGraduationCap /> },
   { label: "Labs", value: "lab", icon: <FaFlask /> },
   { label: "Food", value: "food", icon: <FaUtensils /> },
   { label: "Classrooms", value: "classroom", icon: <FaChalkboard /> },
@@ -81,6 +83,12 @@ export default function CategoriesPage() {
       return acc;
     }, {}), [filter, search]
   );
+
+  // Flat list for filtered views
+  const flatItems = useMemo(() => {
+    if (filter === "all") return [];
+    return Object.values(groupedData).flatMap(section => section.items);
+  }, [groupedData, filter]);
 
   const displayedSections = useMemo(() =>
     Object.values(groupedData), [groupedData]
@@ -124,50 +132,129 @@ export default function CategoriesPage() {
 
       {/* LIST */}
       <div className="main-list-container">
-        {displayedSections.map((section, idx) => (
-          <div key={section.title}>
-            <div
-              className={`list-item ${openIndex === idx ? "expanded" : ""}`}
-              onClick={() =>
-                setOpenIndex(openIndex === idx ? null : idx)
-              }
-            >
-              <div className="item-icon">{section.icon}</div>
-              <div className="item-text">{section.title}</div>
-              <FaChevronRight className="item-arrow" />
-            </div>
+        {filter === "all" ? (
+          // Grouped view for "All" filter
+          <>
+            {displayedSections.map((section, idx) => (
+              <div key={section.title}>
+                <div
+                  className={`list-item ${openIndex === idx ? "expanded" : ""}`}
+                  onClick={() =>
+                    setOpenIndex(openIndex === idx ? null : idx)
+                  }
+                >
+                  <div className="item-icon">{section.icon}</div>
+                  <div className="item-text">{section.title}</div>
+                  <FaChevronRight className="item-arrow" />
+                </div>
 
-            <div className={`sub-list ${openIndex === idx ? "open" : ""}`}>
-              {section.items.map(item => {
-                // For indoor locations, navigate to parent building
-                const destination = item.type === 'indoor' && item.parentBuilding
-                  ? item.parentBuilding
-                  : item.id;
+                <div className={`sub-list ${openIndex === idx ? "open" : ""}`}>
+                  {section.items.map(item => {
+                    // For indoor locations, navigate to parent building
+                    const destination = item.type === 'indoor' && item.parentBuilding
+                      ? item.parentBuilding
+                      : item.id;
 
-                return (
-                  <div
-                    key={item.id}
-                    className="sub-item"
+                    return (
+                      <div
+                        key={item.id}
+                        className="sub-item"
+                      >
+                        <div className="sub-item-content"
+                          onClick={() => navigate("/map", { state: { destination } })}
+                        >
+                          <div className="sub-item-name">{item.name}</div>
+                          {item.type === 'indoor' && (
+                            <div className="sub-item-context">{formatRoomLocation(item, locationData)}</div>
+                          )}
+                        </div>
+
+                        <div className="sub-item-buttons">
+                          <button
+                            className="glass-button start-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate("/map", { state: { destination } });
+                            }}
+                          >
+                            Start
+                          </button>
+                          <button
+                            className="glass-button explore-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // No action - reserved for future functionality
+                            }}
+                          >
+                            Explore
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {displayedSections.length === 0 && (
+              <div className="no-results">
+                No categories found matching your search.
+              </div>
+            )}
+          </>
+        ) : (
+          // Flat list view for specific filters
+          <>
+            {flatItems.map((item, index) => {
+              const destination = item.type === 'indoor' && item.parentBuilding
+                ? item.parentBuilding
+                : item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  className="flat-item"
+                  style={{ animationDelay: `${index * 0.03}s` }}
+                >
+                  <div className="flat-item-content"
                     onClick={() => navigate("/map", { state: { destination } })}
                   >
-                    <div className="sub-item-content">
-                      <div className="sub-item-name">{item.name}</div>
-                      {item.type === 'indoor' && (
-                        <div className="sub-item-context">{formatRoomLocation(item, locationData)}</div>
-                      )}
-                    </div>
-                    <FaExternalLinkAlt />
+                    <div className="flat-item-name">{item.name}</div>
+                    {item.type === 'indoor' && (
+                      <div className="flat-item-context">{formatRoomLocation(item, locationData)}</div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
 
-        {displayedSections.length === 0 && (
-          <div className="no-results">
-            No categories found matching your search.
-          </div>
+                  <div className="flat-item-buttons">
+                    <button
+                      className="glass-button start-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/map", { state: { destination } });
+                      }}
+                    >
+                      Start
+                    </button>
+                    <button
+                      className="glass-button explore-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // No action - reserved for future functionality
+                      }}
+                    >
+                      Explore
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {flatItems.length === 0 && (
+              <div className="no-results">
+                No items found in this category.
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -185,9 +272,7 @@ export default function CategoriesPage() {
           className={`nav-item ${location.pathname === "/buildings" ? "active" : ""}`}
           onClick={() => navigate("/buildings")}
         >
-          <div className="nav-center-btn">
-            <FaBuilding />
-          </div>
+          <FaBuilding />
           <span>Building</span>
         </div>
 
@@ -200,11 +285,11 @@ export default function CategoriesPage() {
         </div>
 
         <div
-          className={`nav-item ${location.pathname === "/map" ? "active" : ""}`}
-          onClick={() => navigate("/map")}
+          className={`nav-item ${location.pathname === "/explore" ? "active" : ""}`}
+          onClick={() => navigate("/explore")}
         >
-          <FaMap />
-          <span>Map</span>
+          <FaCompass />
+          <span>Explore</span>
         </div>
       </nav>
 

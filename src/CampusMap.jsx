@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { nodes, adjacency } from "./data";
+import { nodes, adjacency, locationData } from "./data";
 import "./Map.css";
 
 import {
