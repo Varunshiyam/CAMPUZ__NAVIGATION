@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { nodes, adjacency, locationData } from "./data";
+import { nodes, adjacency } from "./data";
 import "./Map.css";
 
 import {
@@ -16,15 +16,12 @@ import {
 /* FIX LEAFLET ICON */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-/* HELPER FUNCTIONS - Outside component for performance */
+/* ---------------- HELPERS ---------------- */
 const toRad = (d) => (d * Math.PI) / 180;
 
 const haversine = (a, b, c, d) => {
@@ -82,21 +79,86 @@ const astar = (g, start, end) => {
   return [];
 };
 
+/* ---------------- COMPONENT ---------------- */
 const CampusMap = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const goal = location.state?.destination;
-  const cachedUserLocation = location.state?.userLocation;
 
   const mapRef = useRef(null);
   const routeRef = useRef(null);
   const userRef = useRef(null);
   const destRef = useRef(null);
+  const watchIdRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  /* -------- ROUTE CALCULATION (REUSABLE) -------- */
+  const updateRoute = (user) => {
+    const localNodes = { ...nodes };
+    const localAdj = {};
+
+    Object.keys(adjacency).forEach((k) => {
+      localAdj[k] = [...adjacency[k]];
+    });
+
+    let nearest = null;
+    let min = Infinity;
+
+    for (const k in localNodes) {
+      const d = haversine(
+        user.lat,
+        user.lon,
+        localNodes[k].lat,
+        localNodes[k].lon
+      );
+      if (d < min) {
+        min = d;
+        nearest = k;
+      }
+    }
+
+    localNodes.User = user;
+    localAdj.User = [nearest];
+    localAdj[nearest].push("User");
+
+    const graph = buildGraph(localNodes, localAdj);
+    const path = astar(graph, "User", goal);
+
+    if (!path.length) return;
+
+    const latlngs = path.map((p) => [
+      localNodes[p].lat,
+      localNodes[p].lon,
+    ]);
+
+    if (routeRef.current) {
+      mapRef.current.removeLayer(routeRef.current);
+    }
+
+    routeRef.current = L.polyline(latlngs, {
+      color: "red",
+      weight: 5,
+    }).addTo(mapRef.current);
+
+    if (!userRef.current) {
+      userRef.current = L.marker([user.lat, user.lon])
+        .addTo(mapRef.current)
+        .bindPopup("You");
+    } else {
+      userRef.current.setLatLng([user.lat, user.lon]);
+    }
+  };
+
+  /* -------- MAP INIT + LIVE TRACKING -------- */
   useEffect(() => {
+    if (!goal || !nodes[goal]) {
+      setError("Invalid destination");
+      setLoading(false);
+      return;
+    }
+
     const map = L.map("map").setView([10.8795, 77.0213], 17);
     mapRef.current = map;
 
@@ -104,175 +166,51 @@ const CampusMap = () => {
       maxZoom: 20,
     }).addTo(map);
 
-    console.log("CampusMap - Received goal:", goal);
-    console.log("CampusMap - Goal exists in nodes:", !!nodes[goal]);
+    destRef.current = L.marker([
+      nodes[goal].lat,
+      nodes[goal].lon,
+    ]).addTo(map);
 
-    if (!goal || !nodes[goal]) {
-      console.error("CampusMap - No valid goal. Goal:", goal, "Available nodes:", Object.keys(nodes).slice(0, 10));
-      setError("Invalid destination");
-      setLoading(false);
-      return;
-    }
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const user = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        };
 
-    // Use shallow copy instead of structuredClone (much faster)
-    const localNodes = { ...nodes };
-    const localAdj = Object.keys(adjacency).reduce((acc, key) => {
-      acc[key] = [...adjacency[key]];
-      return acc;
-    }, {});
-
-    const processRoute = (user, localNodes, localAdj) => {
-      let nearest = null;
-      let min = Infinity;
-
-      for (const k in localNodes) {
-        const d = haversine(
-          user.lat,
-          user.lon,
-          localNodes[k].lat,
-          localNodes[k].lon
-        );
-        if (d < min) {
-          min = d;
-          nearest = k;
-        }
-      }
-
-      localNodes.User = user;
-      localAdj.User = [nearest];
-      localAdj[nearest].push("User");
-
-      const graph = buildGraph(localNodes, localAdj);
-      const path = astar(graph, "User", goal);
-
-      if (!path.length) {
-        setError("Could not find route");
+        updateRoute(user);
         setLoading(false);
-        return;
+      },
+      (err) => {
+        setError("Unable to track location. Enable GPS.");
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000,
       }
+    );
 
-      const latlngs = path.map((p) => [
-        localNodes[p].lat,
-        localNodes[p].lon,
-      ]);
-
-      routeRef.current = L.polyline(latlngs, {
-        color: "red",
-        weight: 5,
-      }).addTo(map);
-
-      userRef.current = L.marker([user.lat, user.lon])
-        .addTo(map)
-        .bindPopup("You");
-
-      destRef.current = L.marker([
-        localNodes[goal].lat,
-        localNodes[goal].lon,
-      ])
-        .addTo(map)
-        .bindPopup(goal);
-
-      map.fitBounds(latlngs, { padding: [40, 40] });
-      setLoading(false);
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+      map.remove();
     };
-
-    // Use cached location if available, otherwise fetch fresh
-    if (cachedUserLocation) {
-      console.log("Using cached location:", cachedUserLocation);
-      processRoute(cachedUserLocation, localNodes, localAdj);
-    } else {
-      // Add timeout to geolocation request
-      let locationTimeout = setTimeout(() => {
-        setError("Location request timed out. Please ensure location services are enabled.");
-        setLoading(false);
-      }, 5000);
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          clearTimeout(locationTimeout);
-          const user = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-          };
-          processRoute(user, localNodes, localAdj);
-        },
-        (err) => {
-          clearTimeout(locationTimeout);
-          console.error("Geolocation error:", err);
-          setError("Unable to get your location. Please enable location services.");
-          setLoading(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 10000
-        }
-      );
-    }
-
-    return () => map.remove();
   }, [goal]);
 
   const handleExit = () => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    if (routeRef.current) map.removeLayer(routeRef.current);
-    if (userRef.current) map.removeLayer(userRef.current);
-    if (destRef.current) map.removeLayer(destRef.current);
-
-    map.setView([10.8795, 77.0213], 17);
     navigate("/map");
   };
 
   return (
     <>
       {loading && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 1000,
-          background: 'rgba(255, 255, 255, 0.95)',
-          padding: '30px 40px',
-          borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-          textAlign: 'center',
-          fontWeight: 'bold',
-          fontSize: '18px',
-          color: '#333'
-        }}>
-          <div style={{ marginBottom: '15px' }}>🧭 Calculating route...</div>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid #f3f3f3',
-            borderTop: '4px solid #3498db',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto'
-          }}></div>
-        </div>
+        <div className="route-loading">🧭 Tracking your route…</div>
       )}
 
-      {error && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          background: '#ff6b6b',
-          color: 'white',
-          padding: '15px 25px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-          fontWeight: '500'
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="route-error">{error}</div>}
 
       <button className="exit-btn" onClick={handleExit}>
         <FaTimes /> Exit
@@ -280,32 +218,18 @@ const CampusMap = () => {
 
       <div id="map"></div>
 
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-
       <nav className="bottom-nav">
         <div className="nav-item" onClick={() => navigate("/")}>
-          <FaHome />
-          <span>Home</span>
+          <FaHome /><span>Home</span>
         </div>
-
         <div className="nav-item" onClick={() => navigate("/buildings")}>
-          <FaBuilding />
-          <span>Buildings</span>
+          <FaBuilding /><span>Buildings</span>
         </div>
-
         <div className="nav-item" onClick={() => navigate("/categories")}>
-          <FaThLarge />
-          <span>Categories</span>
+          <FaThLarge /><span>Categories</span>
         </div>
-
         <div className="nav-item active">
-          <FaMap />
-          <span>Map</span>
+          <FaMap /><span>Map</span>
         </div>
       </nav>
     </>
