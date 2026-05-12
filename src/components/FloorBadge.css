@@ -1,0 +1,67 @@
+.floor-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Default variant - blue accent theme */
+.floor-badge-default {
+    background: rgba(10, 132, 255, 0.2);
+    border: 1px solid rgba(10, 132, 255, 0.4);
+    color: white;
+    box-shadow: 0 2px 8px rgba(10, 132, 255, 0.2);
+}
+
+/* Accent variant - vibrant blue */
+.floor-badge-accent {
+    background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+}
+
+/* Subtle variant - improved visibility with blue tint */
+.floor-badge-subtle {
+    background: rgba(10, 132, 255, 0.15);
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    color: white;
+    font-weight: 600;
+}
+
+/* Size variants */
+.floor-badge-small {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+.floor-badge-medium {
+    padding: 8px 16px;
+    font-size: 16px;
+}
+
+.floor-badge-large {
+    padding: 10px 20px;
+    font-size: 18px;
+    border-radius: 14px;
+}
+
+.floor-text {
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+
+/* Hover effect */
+.floor-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.floor-badge-accent:hover {
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}

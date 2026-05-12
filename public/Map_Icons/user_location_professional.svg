@@ -1,0 +1,22 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="outerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer expanding radar ring base -->
+  <circle cx="24" cy="24" r="20" fill="#007AFF" fill-opacity="0.15" />
+  <circle cx="24" cy="24" r="16" fill="#007AFF" fill-opacity="0.25" />
+  
+  <!-- Inner beacon ring -->
+  <circle cx="24" cy="24" r="10" fill="white" fill-opacity="0.9" filter="url(#outerGlow)" />
+  
+  <!-- Core glowing blue dot -->
+  <circle cx="24" cy="24" r="6" fill="#007AFF" filter="url(#innerGlow)" />
+</svg>

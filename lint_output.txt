@@ -1,0 +1,125 @@
+
+> kce@0.0.0 lint
+> eslint .
+
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/scripts/migrate-to-firestore.js
+    5:24  error  'collection' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+    5:41  error  'setDoc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+  128:9   error  'process' is not defined                                                           no-undef
+  131:5   error  'process' is not defined                                                           no-undef
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/BuildingsPage.jsx
+  16:29  error  'getFloorName' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/CampusMap.jsx
+  150:11  error    'graph' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+  223:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  221 |
+  222 |     if (!goal || !nodes[goal]) {
+> 223 |       setError("Invalid destination");
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  224 |       setLoading(false);
+  225 |       return;
+  226 |     }  react-hooks/set-state-in-effect
+  313:6   warning  React Hook useEffect has a missing dependency: 'updateRoute'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/CategoriesPage.jsx
+  2:27  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/ExplorePage.jsx
+   11:11  error    'location' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+   21:12  error    'userLocation' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  184:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  182 |         }).addTo(map);
+  183 |
+> 184 |         setLoading(false);
+      |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  185 |
+  186 |         /* ---------- CUSTOM ICON MARKERS ---------- */
+  187 |         Object.values(locationData).forEach((loc) => {  react-hooks/set-state-in-effect
+  238:8   warning  React Hook useEffect has a missing dependency: 'selectedMarkerId'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/MapPage.jsx
+  35:10  error  'floorInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  35:21  error  'setFloorInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/MapView.jsx
+  1:29  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/components/CompassWidget.jsx
+  12:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  10 |         // Check if DeviceOrientation is supported
+  11 |         if (window.DeviceOrientationEvent) {
+> 12 |             setIsSupported(true);
+     |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  13 |
+  14 |             let lastUpdate = 0;
+  15 |             const throttleDelay = 100; // Throttle to 100ms for performance  react-hooks/set-state-in-effect
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/components/FeedbackReminder.jsx
+  11:15  error  'hasCompletedNavigation' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/components/PageTransition.jsx
+  2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/components/PlaceholderMessage.jsx
+  1:10  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/varunshiyam/Desktop/CAMPUZ__NAVIGATION-main/src/components/SearchPanel.jsx
+  55:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  53 |             .slice(0, 5);
+  54 |
+> 55 |         setNearbyPlaces(locationsWithDistance);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |     }, [userLocation]);
+  57 |
+  58 |     // Filter locations based on search and category  react-hooks/set-state-in-effect
+  61:23  error  'id' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  64:42  error  'id' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  75:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  73 |         }
+  74 |
+> 75 |         setFilteredLocations(filtered.slice(0, 10));
+     |         ^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  76 |     }, [searchQuery, selectedCategory]);
+  77 |
+  78 |     const formatDistance = (meters) => {   react-hooks/set-state-in-effect
+
+✖ 24 problems (22 errors, 2 warnings)
+

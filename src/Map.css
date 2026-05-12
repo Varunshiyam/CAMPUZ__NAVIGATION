@@ -1,0 +1,193 @@
+:root {
+  --bg-body: #F2F2F7;
+  --bg-element: #FFFFFF;
+  --bg-sub-item: #E5E5EA;
+  --text-main: #1C1C1E;
+  --text-sub: #8E8E93;
+  --accent-blue: #007AFF;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --nav-height: 70px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  min-height: 100vh;
+  padding-bottom: var(--nav-height);
+}
+
+/* MAP */
+#map {
+  height: calc(100vh - var(--nav-height));
+  width: 100%;
+}
+
+/* EXIT BUTTON (TOP) */
+.exit-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 3000;
+  padding: 10px 18px;
+  background: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* BOTTOM NAVBAR */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: var(--nav-height);
+  background-color: #000000;
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 2000;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.nav-item.active {
+  color: var(--accent-blue);
+}
+
+/* ================= ROUTE LOADING OVERLAY - APPLE MAPS LIGHT THEME ================= */
+.route-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Blue Radar Rings - Pure CSS Animation */
+.loading-radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.radar-center-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  z-index: 10;
+  filter: drop-shadow(0 4px 12px rgba(0, 122, 255, 0.3));
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+.radar-ring {
+  position: absolute;
+  border: 2px solid #007AFF;
+  border-radius: 50%;
+  opacity: 0;
+  animation: radarPulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.radar-ring:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.radar-ring:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.radar-ring:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes radarPulse {
+  0% {
+    width: 20px;
+    height: 20px;
+    top: 50px;
+    left: 50px;
+    opacity: 1;
+  }
+
+  100% {
+    width: 120px;
+    height: 120px;
+    top: 0;
+    left: 0;
+    opacity: 0;
+  }
+}
+
+/* Loading Text - Blue Theme */
+.loading-text {
+  margin-top: 40px;
+  color: #007AFF;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  animation: textPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

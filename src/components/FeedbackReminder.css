@@ -1,0 +1,291 @@
+/* ================= FEEDBACK REMINDER NOTIFICATION ================= */
+.feedback-reminder-notification {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 9999;
+    animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reminder-content {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 215, 0, 0.3);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    max-width: 400px;
+    min-width: 320px;
+}
+
+.reminder-icon-small {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.reminder-text {
+    flex: 1;
+}
+
+.reminder-text h4 {
+    margin: 0 0 4px 0;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.reminder-text p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+}
+
+.reminder-actions-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.feedback-btn-small {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.feedback-btn-small:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.close-btn-small {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.close-btn-small:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ================= EXIT REMINDER MODAL ================= */
+.feedback-reminder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.feedback-reminder-modal {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reminder-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: wave 1s ease-in-out infinite;
+}
+
+.feedback-reminder-modal h3 {
+    margin: 0 0 12px 0;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.feedback-reminder-modal p {
+    margin: 0 0 8px 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.reminder-subtitle {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 14px !important;
+    margin-bottom: 30px !important;
+}
+
+.reminder-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.feedback-btn {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.feedback-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(255, 215, 0, 0.5);
+}
+
+.feedback-btn.primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+}
+
+.dismiss-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.dismiss-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes wave {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-10deg);
+    }
+
+    75% {
+        transform: rotate(10deg);
+    }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 640px) {
+    .feedback-reminder-notification {
+        bottom: 80px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .reminder-content {
+        min-width: auto;
+        width: 100%;
+        padding: 14px 16px;
+    }
+
+    .reminder-text h4 {
+        font-size: 14px;
+    }
+
+    .reminder-text p {
+        font-size: 12px;
+    }
+
+    .feedback-btn-small {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    .feedback-reminder-modal {
+        margin: 20px;
+        padding: 30px 24px;
+    }
+
+    .reminder-icon {
+        font-size: 48px;
+    }
+
+    .feedback-reminder-modal h3 {
+        font-size: 22px;
+    }
+
+    .feedback-reminder-modal p {
+        font-size: 14px;
+    }
+}

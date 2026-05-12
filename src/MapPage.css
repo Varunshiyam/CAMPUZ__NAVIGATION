@@ -1,0 +1,1052 @@
+/* ================= CSS VARIABLES ================= */
+:root {
+  --surface-base: #000000;
+  --surface-raised: #1c1c1e;
+  --surface-overlay: rgba(20, 20, 20, 0.95);
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #636366;
+
+  --accent-blue: #0a84ff;
+  --accent-blue-hover: #409CFF;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ================= TOP HEADER ================= */
+.top-header {
+  background: var(--surface-overlay);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 16px 16px 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.app-title::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 1.5px;
+  background: var(--accent-blue);
+  border-radius: 1px;
+}
+
+/* ================= ENHANCED INLINE ADMIN BUTTON ================= */
+.page-branding {
+  margin: 8px 16px 16px 16px;
+  text-align: center;
+  padding: 6px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-access-button-inline {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-blue);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 10;
+}
+
+.admin-access-button-inline:hover {
+  transform: translateY(-50%) translateY(-3px) scale(1.05);
+  background: var(--surface-overlay);
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-access-button-inline:active {
+  transform: translateY(-50%) scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* ================= GLOBAL ================= */
+body {
+  margin: 0;
+  background: #000000;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif;
+  color: #FFFFFF;
+}
+
+/* ================= APP CONTAINER ================= */
+.app-container {
+  height: 100vh;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* ================= LOADING & ERROR STATES ================= */
+.map-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: #1c1c1e;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: white;
+  font-weight: 600;
+}
+
+.location-error {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #ff6b6b;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+.network-status-offline {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #4a90e2;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* ================= ENHANCED INDOOR LOCATION POPUP ================= */
+.enhanced-location-popup {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: var(--surface-overlay);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-subtle);
+  min-width: 260px;
+  max-width: 340px;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  /* Performance optimizations */
+  will-change: max-height, opacity;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Expanded state - show all details */
+.enhanced-location-popup.expanded {
+  max-height: 300px;
+  opacity: 1;
+}
+
+/* Collapsed state - show only block name */
+.enhanced-location-popup.collapsed {
+  max-height: 70px;
+  opacity: 0.95;
+  padding: 12px 20px;
+}
+
+.enhanced-location-popup.collapsed .popup-header {
+  margin-bottom: 0;
+}
+
+.enhanced-location-popup.collapsed .popup-details,
+.enhanced-location-popup.collapsed .popup-start-btn {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  transition: all 0.4s ease-out;
+  pointer-events: none;
+}
+
+.enhanced-location-popup.collapsed .short-name {
+  font-size: 16px;
+}
+
+.enhanced-location-popup.collapsed .room-id {
+  display: none;
+}
+
+/* Popup Header */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+  transition: margin 0.4s ease;
+}
+
+.short-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  transition: font-size 0.4s ease;
+  flex: 1;
+}
+
+.room-id {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a84ff;
+  background: rgba(10, 132, 255, 0.2);
+  padding: 5px 13px;
+  border-radius: 10px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+/* Details Section */
+.popup-details {
+  max-height: 150px;
+  opacity: 1;
+  transition: all 0.4s ease-in;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detail-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.detail-row .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+.detail-row .value {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 650;
+  letter-spacing: -0.1px;
+}
+
+/* START Button */
+.popup-start-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  box-shadow:
+    0 4px 12px rgba(0, 122, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  /* Performance */
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.popup-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0, 122, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.popup-start-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 6px rgba(0, 122, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Popup animation */
+@keyframes popupSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.enhanced-location-popup {
+  animation: popupSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* For use in LeafletJS - override default popup styles */
+.leaflet-popup.enhanced-indoor-popup .leaflet-popup-content-wrapper {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.leaflet-popup.enhanced-indoor-popup .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+
+.leaflet-popup.enhanced-indoor-popup .leaflet-popup-tip {
+  background: rgba(20, 20, 20, 0.95);
+  box-shadow: var(--shadow-sm);
+}
+
+
+
+
+
+/* ================= SEARCH ================= */
+.search-bar {
+  margin: 12px 16px 8px 16px;
+  background: #FFFFFF;
+  padding: 12px 18px;
+  border-radius: 50px;
+  border: 2px solid #cccccc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  position: relative;
+  z-index: 10;
+}
+
+.search-bar:focus-within {
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: #FFD700;
+}
+
+.search-bar input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  color: #111111;
+  font-weight: 500;
+}
+
+.search-bar input::placeholder {
+  color: #6b6b6b;
+}
+
+/* ================= MAIN BRANDING - KCE MAP ================= */
+.main-branding-title {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1.5px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  animation: titleFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-transform: uppercase;
+}
+
+@keyframes titleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-branding {
+    margin: 6px 16px 12px 16px;
+    padding: 4px 0;
+    gap: 10px;
+  }
+
+  .main-branding-title {
+    font-size: 28px;
+    letter-spacing: 1px;
+  }
+
+  .admin-access-button-inline {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+  }
+}
+
+/* ================= CHIPS ================= */
+.chips {
+  display: flex;
+  gap: 10px;
+  padding: 8px 16px;
+  margin-bottom: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-blue) rgba(0, 0, 0, 0.05);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Light Scrollbar for Webkit browsers */
+.chips::-webkit-scrollbar {
+  height: 6px;
+}
+
+.chips::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 0 16px;
+}
+
+.chips::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+.chips::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+.chip {
+  background: var(--surface-raised);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  will-change: transform;
+}
+
+.chip:hover {
+  background: #1c1a00;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 2px #C8920A,
+    0 4px 14px rgba(200, 146, 10, 0.3);
+  border-color: #C8920A;
+  color: #0a84ff;
+}
+
+.chip.active {
+  background: #1c1a00;
+  color: #0a84ff;
+  border: 2px solid #C8920A;
+  box-shadow:
+    0 0 0 1px #C8920A,
+    0 4px 18px rgba(200, 146, 10, 0.4);
+  transform: translateY(-2px);
+  font-weight: 700;
+}
+
+/* Indoor location chips */
+.chip.indoor-chip {
+  padding: 6px 12px;
+}
+
+.chip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.chip-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.chip-context {
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* ================= MAP SECTION ================= */
+.map-scroll-wrapper {
+  flex: 4;
+  overflow: auto;
+  position: relative;
+}
+
+/* Map larger than viewport → scroll works */
+#map {
+  width: 2000px;
+  height: 1500px;
+  position: relative;
+  z-index: 1;
+  /* Performance optimizations */
+  transform: translateZ(0);
+  /* GPU acceleration */
+  will-change: transform;
+  /* Hint browser for optimization */
+  -webkit-transform: translateZ(0);
+  /* Safari support */
+  backface-visibility: hidden;
+  /* Prevent flickering */
+  -webkit-backface-visibility: hidden;
+  /* Touch optimizations */
+  touch-action: pan-x pan-y;
+  /* Smooth panning on mobile */
+  -webkit-overflow-scrolling: touch;
+  /* iOS momentum scrolling */
+}
+
+/* Optimize tile rendering */
+.leaflet-tile-container {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Smooth tile transitions */
+.leaflet-tile {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  will-change: opacity;
+  filter: invert(1) hue-rotate(180deg) brightness(0.6) contrast(1.2);
+}
+
+
+/* ================= START BUTTON ================= */
+.start-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 8px 24px;
+  border-radius: 50px;
+  border: none;
+  background: var(--accent-blue);
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.start-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.45);
+  background: var(--accent-blue-hover);
+}
+
+.start-btn:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+/* ================= BUILDINGS SECTION ================= */
+.buildings-section {
+  padding: 12px 0 20px;
+  background: var(--surface-base);
+}
+
+.buildings-section h3 {
+  margin: 0 0 12px 16px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFD700;
+  letter-spacing: 0.6px;
+  text-shadow:
+    0 0 10px rgba(255, 215, 0, 0.45),
+    0 0 24px rgba(255, 180, 0, 0.2);
+  text-transform: uppercase;
+}
+
+.buildings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px 8px;
+}
+
+.buildings-row {
+  display: flex;
+  gap: 14px;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Light Scrollbar for Webkit browsers */
+.buildings-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.buildings-row::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 0 16px;
+}
+
+.buildings-row::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+.buildings-row::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+/* ================= BUILDING CARD ================= */
+.building-card {
+  min-width: 160px;
+  min-height: 80px;
+  background: var(--surface-raised);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: normal;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+  will-change: transform;
+}
+
+.building-card:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.25);
+  border-color: #FFD700;
+  color: #0a84ff;
+}
+
+.building-card.active {
+  background: rgba(255, 215, 0, 0.18);
+  color: #0a84ff;
+  border-color: #FFD700;
+  box-shadow: 0 6px 22px rgba(255, 215, 0, 0.4);
+  transform: translateY(-3px);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.25);
+}
+
+.building-card:active {
+  transform: scale(0.96);
+}
+
+/* Indoor location cards */
+.building-card.indoor-card {
+  min-width: 180px;
+  gap: 4px;
+}
+
+.building-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.building-card-context {
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ================= RESPONSIVE BREAKPOINTS ================= */
+
+/* 📱 Mobile - Optimized for maximum map visibility */
+@media (max-width: 640px) {
+  .app-container {
+    max-width: 480px;
+  }
+
+  /* Reduce top spacing for more map area */
+  .search-bar {
+    margin: 10px 8px 6px 8px;
+    padding: 11px 16px;
+    border-radius: 24px;
+  }
+
+  .page-branding {
+    margin: 4px 8px 12px 8px;
+  }
+
+  .campuz-navigation-title {
+    font-size: 26px;
+  }
+
+  /* Compact chips section */
+  .chips {
+    padding: 8px 8px;
+    margin-bottom: 6px;
+  }
+
+  /* ENLARGED MAP AREA - Maximum visibility on mobile */
+  .map-scroll-wrapper {
+    flex: 4.5;
+    /* Much larger map on mobile */
+    margin: 6px 8px;
+    /* Minimal margins for maximum space */
+    border-radius: 4px;
+    /* Smaller corners for easier use */
+    border-width: 1px;
+    /* Thinner border */
+  }
+
+  #map {
+    width: 1800px;
+    height: 1400px;
+    border-radius: 4px;
+    /* Match container */
+  }
+
+  /* Compact buildings section */
+  .buildings-section {
+    padding: 8px 0 16px;
+  }
+
+  .buildings-section h3 {
+    margin: 0 0 8px 8px;
+    font-size: 16px;
+  }
+
+  .buildings-row {
+    padding: 0 8px;
+  }
+
+  .building-card {
+    min-width: 140px;
+    min-height: 70px;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  /* Larger touch targets for START button */
+  .start-btn {
+    padding: 10px 28px;
+    font-size: 15px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  /* Ensure bottom nav doesn't overlap */
+  .app-container {
+    padding-bottom: 70px;
+  }
+}
+
+/* 📱 Tablet - Balanced layout */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .app-container {
+    max-width: 900px;
+  }
+
+  .map-scroll-wrapper {
+    flex: 2.5;
+    margin: 10px 12px;
+    border-radius: 6px;
+  }
+
+  #map {
+    width: 1500px;
+    height: 1200px;
+  }
+
+  .search-bar {
+    margin: 14px 12px 10px 12px;
+  }
+
+  .page-branding {
+    margin: 6px 12px 16px 12px;
+  }
+
+  .campuz-navigation-title {
+    font-size: 32px;
+  }
+}
+
+/* 🖥 Desktop & Large screens - Full experience */
+@media (min-width: 1025px) {
+  .app-container {
+    max-width: 100%;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Larger border radius on desktop */
+  .map-scroll-wrapper {
+    border-radius: 8px;
+  }
+}
+
+/* ================= NAVBAR BASE ================= */
+/* ================= BASE NAVBAR ================= */
+.nav-bar {
+  width: 100%;
+  background: var(--surface-overlay);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  color: var(--text-secondary);
+  z-index: 2000;
+}
+
+/* NAV ITEM */
+.nav-item {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-item .icon {
+  font-size: 18px;
+}
+
+.nav-item.active {
+  color: var(--accent-blue);
+}
+
+/* ================= MOBILE (BOTTOM NAVBAR) ================= */
+@media (max-width: 767px) {
+  .nav-bar {
+    position: fixed;
+    /* ✅ ONLY mobile */
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 64px;
+    max-width: 480px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .nav-center {
+    width: 52px;
+    height: 52px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: white;
+    margin-top: -28px;
+    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+  }
+
+  /* prevent content hiding */
+  .app-container {
+    padding-bottom: 64px;
+  }
+}
+
+/* ================= LARGE SCREEN (TOP NAVBAR) ================= */
+/* Inside your existing desktop media query */
+@media (min-width: 1025px) {
+  .app-container {
+    max-width: 100%;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+
+
+  /* ✅ ADD THESE */
+  .search-bar {
+    max-width: 600px;
+    margin: 16px auto 10px auto;
+    padding: 13px 22px;
+    border-radius: 50px;
+  }
+
+  .search-bar input {
+    font-size: 15px;
+  }
+}
+
+/* ================= BOTTOM NAVIGATION ================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 70px;
+  background: #000000;
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  color: #8e8e93;
+  font-size: 12px;
+}
+
+.bottom-nav .nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bottom-nav .nav-item.active {
+  color: #0a84ff;
+}
+
+.bottom-nav .nav-item svg {
+  font-size: 20px;
+}
+
+.bottom-nav .nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ================= BLUE DOT MARKERS ================= */
+.blue-dot-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.blue-dot {
+  width: 18px;
+  height: 18px;
+  background: #0a84ff;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0 rgba(0, 122, 255, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  will-change: transform, box-shadow;
+  position: relative;
+  animation: blueRadarPulse 2s infinite;
+}
+
+@keyframes blueRadarPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 15px rgba(0, 122, 255, 0), 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 122, 255, 0), 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.blue-dot:hover {
+  transform: scale(1.15);
+}

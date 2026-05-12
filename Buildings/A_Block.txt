@@ -1,0 +1,54 @@
+Laboratory:
+ABLOCK:
+0-Floor:
+A107(Metrology Lab) 
+A111(Mechatronics Lab)
+1-Floor:
+Laboratory - A213 (Communication Lab)
+2-Floor:
+Laboratory - A307, A308, A310 (Donald Knuth La[DR]}, Mat Lab)
+3-Floor:
+Laboratory - A414 (Operating Systems Lab)
+
+
+
+FacultyRoom:
+Ablock:
+2-floor:Departments - A306 (Science and Humanities)
+3-floor:English Faculty Room[A403,A406]
+0-floor:Faculty Room: A105
+
+
+Officerooms:
+ABLOCK:
+0thfloor:Transport Office
+1-Floor:Office[A202]
+1-floor:Cashier Section[A204]
+0th-floor:Maintenance Dept:A108
+
+HALLS:
+ABLOCK:
+2-floor:Drawing Hall - A301
+
+RESTROOMS:
+ABLOCK:
+0-Floor:Ladies Rest Room
+1-Floor:Gents Rest Room
+2-Floor:Ladies Rest Room
+3-Floor:Gents Rest Room
+
+CLASSROOMS:
+0-Floor:
+Class Rooms: A101.A102.A112.A116.A117
+1-Floor:
+Class Rooms - A208, A209, A214
+2-Floor:
+Class Rooms - A302, A304, A311
+3-Floor:
+ClassRooms- A401, A402, A404, A405, A407, A408, A412, A413
+
+Cells:
+IQAC - A205
+Placement Cell:ablock:0-Floor:A106
+
+
