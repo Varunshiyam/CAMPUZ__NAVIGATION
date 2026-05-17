@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karpagam College of Engineering - Campus Navigator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f7f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Mock Mobile Device Container */
+        .phone-container {
+            width: 360px;
+            height: 740px;
+            background-color: #ffffff;
+            border: 12px solid #000000;
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Top Camera Notch */
+        .phone-notch {
+            width: 110px;
+            height: 25px;
+            background-color: #000000;
+            border-radius: 0 0 15px 15px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        /* Branding Content Wrapper */
+        .brand-wrapper {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Stylized 'K' Logo Icon */
+        .logo-icon {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            margin-bottom: 15px;
+        }
+
+        .logo-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Colors based on image: Deep Slate/Blue and Ochre/Orange */
+        .dot-blue { background-color: #34495e; }
+        .dot-orange { background-color: #d37226; }
+
+        .d1 { top: 0; left: 20px; }
+        .d2 { top: 18px; left: 0; }
+        .d3 { top: 18px; left: 20px; }
+        .d4 { bottom: 0; left: 20px; }
+
+        /* The 'K' leg shapes */
+        .k-arm-top {
+            position: absolute;
+            width: 30px;
+            height: 14px;
+            background-color: #d37226;
+            border-radius: 4px;
+            top: 15px;
+            right: 5px;
+            transform: rotate(-35deg);
+        }
+
+        .k-arm-bottom {
+            position: absolute;
+            width: 35px;
+            height: 14px;
+            background-color: #d37226;
+            border-radius: 4px;
+            bottom: 12px;
+            right: 0;
+            transform: rotate(35deg);
+        }
+
+        /* Typography Styling */
+        .main-title {
+            color: #2c3e50;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            color: #d37226;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            color: #7f8c8d;
+            font-size: 9px;
+            word-spacing: 4px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .divider {
+            width: 80%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #bdc3c7, transparent);
+            margin-bottom: 10px;
+        }
+
+        .accreditation {
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .naac-grade {
+            color: #555555;
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 2px;
+            margin-bottom: 30px;
+        }
+
+        /* App Function Label */
+        .app-label {
+            color: #d37226;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-top: 2px solid #d37226;
+            padding-top: 6px;
+            margin-top: 10px;
+            width: 70%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="phone-notch"></div>
+
+        <div class="brand-wrapper">
+            
+            <div class="logo-icon">
+                <div class="logo-dot dot-blue d1"></div>
+                <div class="logo-dot dot-orange d2"></div>
+                <div class="logo-dot dot-blue d3"></div>
+                <div class="logo-dot dot-blue d4"></div>
+                <div class="k-arm-top"></div>
+                <div class="k-arm-bottom"></div>
+            </div>
+
+            <h1 class="main-title">Karpagam</h1>
+            <h2 class="subtitle">College of Engineering</h2>
+            
+            <p class="tagline">Rediscover | Refine | Redefine</p>
+            
+            <div class="divider"></div>
+
+            <p class="accreditation">Autonomous</p>
+            <p class="naac-grade">Accredited by NAAC with A grade</p>
+            
+            <div class="app-label">Campus Navigator</div>
+
+        </div>
+    </div>
+
+</body>
+</html>
