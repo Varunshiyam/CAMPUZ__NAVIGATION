@@ -191,3 +191,169 @@ body {
     opacity: 1;
   }
 }
+
+/* ================= WALKING NAVIGATION EXTENSIONS ================= */
+
+/* Counter-rotate markers to keep them upright */
+.minimal-pin,
+.dest-marker-inner,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip-container {
+  transform: rotate(var(--map-rotation, 0deg));
+  transform-origin: center;
+  transition: transform 0.1s linear;
+}
+
+.dest-marker-inner {
+  transform-origin: bottom center;
+}
+
+/* Custom Map Controls Overlay */
+.map-overlay-controls {
+  position: absolute;
+  right: 16px;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.map-overlay-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(28, 28, 30, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-overlay-btn:hover {
+  background: var(--accent-blue, #0a84ff);
+  border-color: var(--accent-blue, #0a84ff);
+  transform: scale(1.05);
+}
+
+.map-overlay-btn:active {
+  transform: scale(0.95);
+}
+
+.map-overlay-btn.active {
+  background: var(--accent-blue, #0a84ff);
+  border-color: var(--accent-blue, #0a84ff);
+  color: white;
+}
+
+/* Recenter Floating Button */
+.recenter-nav-btn {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  background: var(--accent-blue, #0a84ff);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+  z-index: 1000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: recenterFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+
+.recenter-nav-btn:hover {
+  background: var(--accent-blue-hover, #409cff);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(10, 132, 255, 0.5);
+}
+
+.recenter-nav-btn:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes recenterFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Compass and Directional Markers */
+.compass-icon-rotate {
+  transition: transform 0.1s linear;
+}
+
+.user-direction-indicator {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-blue-dot {
+  width: 16px;
+  height: 16px;
+  background: #007AFF;
+  border: 3px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 122, 255, 0.5), 0 2px 5px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+
+.user-direction-beam {
+  position: absolute;
+  top: -6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 20px solid rgba(0, 122, 255, 0.4);
+  filter: drop-shadow(0 0 4px rgba(0, 122, 255, 0.6));
+  z-index: 1;
+}
+
+/* Pulsing rings for user marker */
+.user-pulse-ring {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #007AFF;
+  border-radius: 50%;
+  animation: userDotPulse 2s ease-out infinite;
+  opacity: 0;
+  z-index: 0;
+}
+
+@keyframes userDotPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+

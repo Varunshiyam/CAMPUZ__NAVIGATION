@@ -1,0 +1,451 @@
+/* Welcome Page Core Layout */
+.welcome-container {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Background Gradients and Glowing Elements */
+.bg-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 1;
+}
+
+.bg-glow-gold-top {
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+}
+
+.bg-glow-center {
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, rgba(0, 0, 0, 0) 80%);
+}
+
+/* Content Wrapper */
+.welcome-content {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* College Tagline Header (Upper Badge) */
+.welcome-header-tag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2.5rem;
+}
+
+.badge-line {
+  height: 1px;
+  width: 40px;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0), rgba(212, 175, 55, 0.7));
+}
+
+.badge-line:last-child {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.7), rgba(212, 175, 55, 0));
+}
+
+.badge-text {
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  color: #D4AF37;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+}
+
+/* Golden Title Effects */
+.college-title-container {
+  margin-bottom: 3.5rem;
+}
+
+.college-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* Shimmering Metallic Gold Text Styling */
+.gold-text-glow {
+  font-size: 3.8rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #FFE8A3 0%, #D4AF37 40%, #AA7C11 70%, #D4AF37 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 4s linear infinite;
+  text-shadow: 0px 4px 20px rgba(212, 175, 55, 0.15);
+}
+
+.gold-sub-text {
+  font-size: 1.8rem;
+  font-weight: 300;
+  letter-spacing: 8px;
+  color: #E6C687;
+  margin-top: 0.5rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.college-slogan {
+  font-size: 1.05rem;
+  color: #8E8E93;
+  margin-top: 1.2rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+/* Centerpiece Rings & Icons */
+.centerpiece {
+  margin-bottom: 3.5rem;
+  position: relative;
+}
+
+.outer-ring {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(10, 8, 5, 0.3);
+  box-shadow: 0 0 35px rgba(212, 175, 55, 0.05), inset 0 0 25px rgba(212, 175, 55, 0.03);
+}
+
+.outer-ring::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  border: 2px dashed rgba(212, 175, 55, 0.15);
+  animation: rotate 20s linear infinite;
+}
+
+.inner-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a160d 0%, #000000 100%);
+  border: 2px solid #D4AF37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.25);
+}
+
+.center-icon {
+  font-size: 2.5rem;
+  color: #FFE07D;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+/* Call-To-Action Button */
+.cta-container {
+  margin-bottom: 4rem;
+}
+
+.gold-btn-enter {
+  background: linear-gradient(135deg, #1b160b 0%, #0d0a05 100%);
+  border: 2px solid #D4AF37;
+  border-radius: 50px;
+  color: #FFE07D;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 1.2rem 3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 25px rgba(212, 175, 55, 0.2);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.gold-btn-enter:hover {
+  transform: translateY(-4px);
+  color: #ffffff;
+  border-color: #FFE07D;
+  box-shadow: 0 10px 35px rgba(212, 175, 55, 0.4);
+}
+
+.gold-btn-enter:active {
+  transform: translateY(-1px);
+}
+
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.25), transparent);
+  transition: transform 0.5s;
+}
+
+.gold-btn-enter:hover .btn-glow {
+  transform: translateX(100%);
+  transition: transform 0.8s ease-in-out;
+}
+
+.btn-arrow {
+  font-size: 0.95rem;
+  transition: transform 0.3s ease;
+}
+
+.gold-btn-enter:hover .btn-arrow {
+  transform: translateX(5px);
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 4rem;
+}
+
+/* Glassmorphism Feature Cards with Gold Details */
+.feature-card {
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(18, 15, 10, 0.75);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.08);
+}
+
+.feature-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  color: #D4AF37;
+  margin-bottom: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background: #D4AF37;
+  color: #000000;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+  transform: scale(1.05);
+}
+
+.feature-card h3 {
+  color: #FFE07D;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.5px;
+}
+
+.feature-card p {
+  color: #8E8E93;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* Footer Section */
+.welcome-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+  padding-top: 1.5rem;
+  color: #636366;
+  font-size: 0.8rem;
+  margin-top: auto;
+}
+
+.welcome-footer p {
+  margin: 0;
+}
+
+
+/* Animations */
+@keyframes shine {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design for Mobile Devices */
+@media (max-width: 768px) {
+  .welcome-container {
+    padding: 3rem 1rem 1.5rem 1rem;
+    justify-content: flex-start;
+  }
+
+  .welcome-header-tag {
+    margin-bottom: 1.8rem;
+  }
+
+  .badge-line {
+    width: 25px;
+  }
+
+  .badge-text {
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+  }
+
+  .college-title-container {
+    margin-bottom: 2.2rem;
+  }
+
+  .gold-text-glow {
+    font-size: 2.5rem;
+  }
+
+  .gold-sub-text {
+    font-size: 1.25rem;
+    letter-spacing: 4px;
+  }
+
+  .college-slogan {
+    font-size: 0.9rem;
+    margin-top: 0.8rem;
+  }
+
+  .centerpiece {
+    margin-bottom: 2.5rem;
+  }
+
+  .outer-ring {
+    width: 100px;
+    height: 100px;
+  }
+
+  .inner-ring {
+    width: 76px;
+    height: 76px;
+  }
+
+  .center-icon {
+    font-size: 1.8rem;
+  }
+
+  .cta-container {
+    margin-bottom: 2.5rem;
+    width: 100%;
+  }
+
+  .gold-btn-enter {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 3rem;
+  }
+
+  .feature-card {
+    padding: 1.5rem 1.25rem;
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 15px;
+  }
+
+  .feature-icon-wrapper {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 1.15rem;
+  }
+
+  .feature-card-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .feature-card p {
+    font-size: 0.8rem;
+  }
+
+  .welcome-footer {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+    padding-top: 1.2rem;
+  }
+}

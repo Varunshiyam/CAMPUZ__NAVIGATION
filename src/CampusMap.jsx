@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { nodes, adjacency } from "./data";
+import { useMap } from "./components/MapProvider";
 import "./Map.css";
 
 import {
@@ -10,8 +11,15 @@ import {
   FaBuilding,
   FaThLarge,
   FaMap,
-  FaTimes
+  FaTimes,
+  FaPlus,
+  FaMinus,
+  FaLocationArrow,
+  FaCompass
 } from "react-icons/fa";
+import { useCompassHeading } from "./hooks/useCompassHeading";
+import { useUserLocation } from "./hooks/useUserLocation";
+import { useMapAutoRotate } from "./hooks/useMapAutoRotate";
 
 /* FIX LEAFLET ICON */
 delete L.Icon.Default.prototype._getIconUrl;
@@ -85,7 +93,8 @@ const CampusMap = () => {
   const navigate = useNavigate();
   const goal = location.state?.destination;
 
-  const mapRef = useRef(null);
+  const { map, attachMap, detachMap, isInitialized } = useMap();
+  const mapContainerRef = useRef(null);
   const routeRef = useRef(null);
   const userRef = useRef(null);
   const destRef = useRef(null);
@@ -102,6 +111,18 @@ const CampusMap = () => {
   const isInvalid = !goal || !nodes[goal];
   const [loading, setLoading] = useState(!isInvalid);
   const [error, setError] = useState(isInvalid ? "Invalid destination" : null);
+
+  // Custom walking navigation hooks
+  const { heading, permissionStatus, requestPermission } = useCompassHeading();
+  const { location: userLocation, error: gpsError } = useUserLocation({ throttleMs: 1500 });
+  const { isAutoFollow, recenter, resetNorth } = useMapAutoRotate(map, userLocation, heading, { enabled: true });
+
+  useEffect(() => {
+    if (gpsError) {
+      setError(gpsError);
+      setLoading(false);
+    }
+  }, [gpsError]);
 
   /* -------- HELPER: DISTANCE FROM PATH -------- */
   const distanceFromPath = (userPos, path) => {
@@ -131,14 +152,35 @@ const CampusMap = () => {
 
     // Always update user marker position (visual update only)
     if (!userRef.current) {
-      userRef.current = L.marker([user.lat, user.lon])
-        .addTo(mapRef.current)
+      const userIcon = L.divIcon({
+        className: 'user-location-marker-container',
+        html: `
+          <div class="user-direction-indicator">
+            <div class="user-pulse-ring"></div>
+            <div class="user-direction-beam"></div>
+            <div class="user-blue-dot"></div>
+          </div>
+        `,
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+        popupAnchor: [0, -24],
+      });
+
+      userRef.current = L.marker([user.lat, user.lon], { icon: userIcon })
+        .addTo(map)
         .bindPopup("You");
       console.log("✅ Created user marker");
     } else {
       // Direct Leaflet update - no React re-render
       userRef.current.setLatLng([user.lat, user.lon]);
       console.log("✅ Updated user marker position");
+    }
+
+    // Update direction indicator rotation relative to map
+    const el = userRef.current.getElement();
+    if (el) {
+      const relativeHeading = heading !== null ? heading : 0;
+      el.style.setProperty('--user-heading', `${relativeHeading}deg`);
     }
 
     // Only recalculate route if user deviated significantly
@@ -196,25 +238,23 @@ const CampusMap = () => {
     console.log("🗺️ Creating polyline with", latlngs.length, "points");
 
     if (routeRef.current) {
-      console.log("🗑️ Removing old route");
-      mapRef.current.removeLayer(routeRef.current);
+      console.log("🔄 Updating existing route");
+      routeRef.current.setLatLngs(latlngs);
+    } else {
+      console.log("✅ Creating new route polyline");
+      routeRef.current = L.polyline(latlngs, {
+        color: "red",
+        weight: 5,
+        opacity: 0.8,
+        smoothFactor: 1
+      }).addTo(map);
     }
-
-    routeRef.current = L.polyline(latlngs, {
-      color: "red",
-      weight: 5,
-      opacity: 0.8,
-      smoothFactor: 1
-    }).addTo(mapRef.current);
-
-    console.log("✅ RED POLYLINE CREATED AND ADDED TO MAP!");
-    console.log("🔴 Polyline options:", routeRef.current.options);
 
     // Trigger navigation completed event for feedback reminder
     window.dispatchEvent(new Event('navigationCompleted'));
   };
 
-  /* -------- MAP INIT + LIVE TRACKING (OPTIMIZED) -------- */
+  /* -------- MAP INIT + LIVE ROUTING (OPTIMIZED) -------- */
   useEffect(() => {
     // GPS Optimization: Prevent map recreation
     if (mapInitializedRef.current) return;
@@ -226,91 +266,69 @@ const CampusMap = () => {
       graphRef.current = buildGraph(nodes, adjacency);
     }
 
-    const bounds = L.latLngBounds(
-      [10.8725, 77.0160], // SOUTH expanded
-      [10.8845, 77.0265]  // NORTH safe buffer
-    );
+    // Delay initialization to let Framer Motion page transition complete
+    const initTimer = setTimeout(() => {
+      if (!mapContainerRef.current || !map) return;
+      attachMap(mapContainerRef.current);
+      
+      mapInitializedRef.current = true;
 
-    const map = L.map("map", {
-      maxBounds: bounds,
-      maxBoundsViscosity: 1.0, // Strict boundary enforcement
-      minZoom: 17,
-      maxZoom: 19,
-      zoomControl: true,
-      preferCanvas: true,
-      zoomAnimation: true,
-      fadeAnimation: true,
-      markerZoomAnimation: false,
-    }).setView([10.8795, 77.0213], 17);
+      // Custom counter-rotatable destination marker
+      const destIcon = L.divIcon({
+        className: "dest-marker-container",
+        html: `
+          <div class="dest-marker-inner">
+            <img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png" alt="destination" style="width: 25px; height: 41px;" />
+          </div>
+        `,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      });
 
-    mapRef.current = map;
-    mapInitializedRef.current = true;
+      destRef.current = L.marker([
+        nodes[goal].lat,
+        nodes[goal].lon,
+      ], { icon: destIcon }).addTo(map);
 
-    // GPS Optimization: Enhanced tile layer settings
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      minZoom: 17,
-      keepBuffer: 4,              // Aggressive caching
-      updateWhenIdle: true,       // Load tiles after movement stops
-      updateWhenZooming: false,   // No reload during zoom
-      updateInterval: 250,        // Throttle tile updates
-      crossOrigin: true,
-      errorTileUrl: '',
-      detectRetina: false,
-      noWrap: true,
-      bounds: bounds,
-    }).addTo(map);
-
-    destRef.current = L.marker([
-      nodes[goal].lat,
-      nodes[goal].lon,
-    ]).addTo(map);
-
-    // GPS Optimization: Throttled watchPosition
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const now = Date.now();
-        const timeSinceLastUpdate = now - lastUpdateRef.current;
-
-        // Throttle: only update every 1.5 seconds
-        if (timeSinceLastUpdate < 1500) {
-          return; // Skip this update
-        }
-
-        lastUpdateRef.current = now;
-
-        const user = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        };
-
-        updateRoute(user);
+      if (userLocation) {
+        updateRoute(userLocation);
         setLoading(false);
-      },
-      (err) => {
-        console.error("GPS error:", err);
-        setError("Location unavailable. Enable GPS for live routing.");
-        setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 2000,      // Reuse recent location (2s)
-        timeout: 5000,
       }
-    );
+    }, 300); // 300ms delay for page transition
 
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+      clearTimeout(initTimer);
+      
+      if (map) {
+        if (destRef.current && map.hasLayer(destRef.current)) {
+          map.removeLayer(destRef.current);
+          destRef.current = null;
+        }
+        if (userRef.current && map.hasLayer(userRef.current)) {
+          map.removeLayer(userRef.current);
+          userRef.current = null;
+        }
+        if (routeRef.current && map.hasLayer(routeRef.current)) {
+          map.removeLayer(routeRef.current);
+          routeRef.current = null;
+        }
       }
-      map.remove();
+      
+      detachMap();
       mapInitializedRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goal]);
+  }, [goal, isInitialized, map, attachMap, detachMap]);
+
+  useEffect(() => {
+    if (!map || !userLocation || !mapInitializedRef.current) return;
+    updateRoute(userLocation);
+    setLoading(false);
+  }, [map, userLocation]);
 
   const handleExit = () => {
-    navigate("/");
+    navigate("/home");
   };
 
   return (
@@ -337,10 +355,62 @@ const CampusMap = () => {
         <FaTimes /> Exit
       </button>
 
-      <div id="map"></div>
+      <div 
+        className="map-nav-wrapper" 
+        style={{ width: '100%', height: '100%', flex: 1, minHeight: '60vh', position: 'relative', overflow: 'hidden' }}
+      >
+        <div id="map-container-CampusMap" ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}></div>
+
+        {/* Custom Map Controls */}
+        {map && (
+          <div className="map-overlay-controls" style={{ top: '80px' }}>
+            <button className="map-overlay-btn" onClick={() => map.zoomIn()} title="Zoom In">
+              <FaPlus />
+            </button>
+            <button className="map-overlay-btn" onClick={() => map.zoomOut()} title="Zoom Out">
+              <FaMinus />
+            </button>
+            <button 
+              className={`map-overlay-btn ${isAutoFollow ? 'active' : ''}`} 
+              onClick={recenter} 
+              title="Follow Me"
+            >
+              <FaLocationArrow />
+            </button>
+            <button 
+              className="map-overlay-btn" 
+              onClick={resetNorth} 
+              title="North Up"
+            >
+              <FaCompass 
+                className="compass-icon-rotate" 
+                style={{ transform: `rotate(${-((heading || 0))}deg)` }} 
+              />
+            </button>
+          </div>
+        )}
+
+        {/* Floating Recenter Button */}
+        {map && !isAutoFollow && userLocation && (
+          <button className="recenter-nav-btn" onClick={recenter}>
+            <FaLocationArrow /> Recenter Navigation
+          </button>
+        )}
+
+        {/* Device Orientation Permission Request Prompt */}
+        {permissionStatus === 'prompt' && (
+          <button 
+            className="recenter-nav-btn" 
+            style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: '#FFD700', color: '#000000' }}
+            onClick={requestPermission}
+          >
+            <FaCompass /> Enable Compass Calibration
+          </button>
+        )}
+      </div>
 
       <nav className="bottom-nav">
-        <div className="nav-item" onClick={() => navigate("/")}>
+        <div className="nav-item" onClick={() => navigate("/home")}>
           <FaHome /><span>Home</span>
         </div>
         <div className="nav-item" onClick={() => navigate("/buildings")}>

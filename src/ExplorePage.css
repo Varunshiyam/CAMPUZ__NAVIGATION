@@ -43,74 +43,57 @@
     font-size: 16px;
 }
 
-/* ================= CUSTOM MAP ICONS ================= */
-.custom-map-icon {
-    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+/* ================= MINIMAL PIN MARKERS ================= */
+
+.minimal-professional-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.custom-map-icon:hover {
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
-    transform: scale(1.15);
+.minimal-pin {
+  width: 14px;
+  height: 14px;
+  background: #000000;
+  border: 2px solid #FFD700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
 }
 
-.custom-map-icon:active {
-    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
-    transform: scale(1.05);
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+.minimal-pin-inner {
+  width: 4px;
+  height: 4px;
+  background: #FFD700;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
 }
 
-/* Apple Maps Icon Pop Animation */
-@keyframes iconPop {
-    0% {
-        transform: scale(1) translateY(0);
-    }
-
-    50% {
-        transform: scale(1.35) translateY(-12px);
-    }
-
-    100% {
-        transform: scale(1.2) translateY(-8px);
-    }
+.minimal-pin:hover {
+  transform: scale(1.3) translateY(-2px);
+  background: #FFD700;
+  box-shadow: 0 6px 14px rgba(255, 215, 0, 0.4);
 }
 
-.custom-map-icon.selected {
-    animation: iconPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-    filter: drop-shadow(0 8px 20px rgba(0, 122, 255, 0.6)) !important;
-    z-index: 1000 !important;
-    position: relative;
+.minimal-pin:hover .minimal-pin-inner {
+  background: #000000;
+  transform: scale(1.2);
 }
 
-/* Mobile optimization */
-@media (max-width: 768px) {
-    .custom-map-icon {
-        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
-    }
-
-    .custom-map-icon:hover {
-        filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3));
-        transform: scale(1.12);
-    }
-
-    .custom-map-icon:active {
-        transform: scale(1.08);
-    }
+.minimal-professional-marker.selected .minimal-pin {
+  background: #FFD700;
+  border-color: #FFFFFF;
+  transform: scale(1.4);
+  box-shadow: 0 8px 16px rgba(255, 215, 0, 0.5);
 }
 
-/* Touch device optimization */
-@media (hover: none) and (pointer: coarse) {
-    .custom-map-icon:hover {
-        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
-        transform: scale(1);
-    }
-
-    .custom-map-icon:active {
-        filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
-        transform: scale(1.1);
-    }
+.minimal-professional-marker.selected .minimal-pin-inner {
+  background: #000000;
 }
 
 /* ================= USER LOCATION MARKER ================= */
@@ -555,11 +538,17 @@
 .exit-button,
 .building-detail-sheet,
 .pulse-dot,
-.destination-pin,
-.custom-map-icon {
+.destination-pin {
     will-change: transform;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+}
+
+/* Leaflet controls marker transforms via inline styles.
+   Applying transform or will-change on .custom-map-icon
+   conflicts with Leaflet positioning — only use filter. */
+.custom-map-icon {
+    will-change: filter;
 }
 
 /* ================= MOBILE OPTIMIZATIONS ================= */

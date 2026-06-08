@@ -78,7 +78,7 @@ export default function FeedbackReminder() {
     };
 
     const handleExitFeedback = () => {
-        window.open('YOUR_GOOGLE_FORM_URL_HERE', '_blank');
+        window.open('https://forms.gle/qDSTXFeY1eAisaedA', '_blank');
         setShowExitReminder(false);
         sessionStorage.setItem('campuz_exit_reminder_dismissed', 'true');
     };
