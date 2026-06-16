@@ -74,7 +74,10 @@ export default function MapPage() {
   // Custom Navigation hooks
   const { heading, permissionStatus, requestPermission } = useCompassHeading();
   const { location: userLocation, error: gpsError } = useUserLocation({ throttleMs: 1500 });
-  const { isAutoFollow, recenter, resetNorth } = useMapAutoRotate(map, userLocation, heading, { enabled: true });
+  const { isAutoFollow, recenter, resetNorth } = useMapAutoRotate(map, userLocation, heading, {
+    enabled: true,
+    userMarker: userMarkerRef
+  });
 
   useEffect(() => {
     if (gpsError) {
@@ -306,17 +309,9 @@ export default function MapPage() {
       userMarkerRef.current = L.marker([userLocation.lat, userLocation.lon], { icon: userIcon })
         .addTo(map)
         .bindPopup("📍 You are here");
-    } else {
-      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lon]);
     }
-
-    // Update direction indicator rotation relative to map
-    const el = userMarkerRef.current.getElement();
-    if (el) {
-      const relativeHeading = heading !== null ? heading : 0;
-      el.style.setProperty('--user-heading', `${relativeHeading}deg`);
-    }
-  }, [map, userLocation, heading]);
+    // Positioning and rotation are now handled smoothly by useMapAutoRotate at 60FPS
+  }, [map, userLocation]);
 
   /* ---------- DESTINATION UPDATE ---------- */
   useEffect(() => {

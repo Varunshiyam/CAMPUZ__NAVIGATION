@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import './ExplorePage.css';
 import { nodes, locationData } from './data';
 import { useMap } from "./components/MapProvider";
+import { useCompassHeading } from './hooks/useCompassHeading';
 import { FaHome, FaBuilding, FaThLarge, FaCompass, FaTimes, FaDirections } from 'react-icons/fa';
 
 const ExplorePage = () => {
@@ -14,12 +15,20 @@ const ExplorePage = () => {
     const mapContainerRef = useRef(null);
     const markersRef = useRef({});
     const userMarkerRef = useRef(null);
-    const lastGpsUpdateRef = useRef(0);
     const watchIdRef = useRef(null);
 
     const [selectedBuilding, setSelectedBuilding] = useState(null);
     const loading = !isInitialized;
 
+    // Compass heading for directional arrow
+    const { heading, permissionStatus, requestPermission } = useCompassHeading();
+
+    /* ---------- REQUEST COMPASS PERMISSION ---------- */
+    useEffect(() => {
+        if (permissionStatus === 'prompt') {
+            requestPermission();
+        }
+    }, [permissionStatus, requestPermission]);
 
 
     /* ---------- GET CUSTOM ICON FOR LOCATION ---------- */
@@ -146,45 +155,55 @@ const ExplorePage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isInitialized, attachMap, detachMap, map]);
 
-
-
+    /* ---------- USER LOCATION MARKER (IMMEDIATE) ---------- */
     useEffect(() => {
         if (!map) return;
 
-        watchIdRef.current = navigator.geolocation.watchPosition(
+        const createUserMarker = (latitude, longitude) => {
+            if (userMarkerRef.current) {
+                userMarkerRef.current.setLatLng([latitude, longitude]);
+            } else {
+                const userIcon = L.icon({
+                    iconUrl: '/Map_Icons/user_location_professional.svg',
+                    iconSize: [48, 48],
+                    iconAnchor: [24, 24],
+                    popupAnchor: [0, -24],
+                    className: 'user-location-marker'
+                });
+
+                userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
+                    .addTo(map)
+                    .bindPopup('📍 You are here');
+            }
+        };
+
+        // Get position IMMEDIATELY without delay
+        navigator.geolocation.getCurrentPosition(
             (pos) => {
-                const { latitude, longitude } = pos.coords;
-
-                // GPS Optimization: Throttle updates to 1.5 seconds
-                const now = Date.now();
-                if (now - lastGpsUpdateRef.current < 1500) {
-                    return;
-                }
-                lastGpsUpdateRef.current = now;
-
-                if (!userMarkerRef.current) {
-                    const userIcon = L.icon({
-                        iconUrl: '/Map_Icons/user_location_professional.svg',
-                        iconSize: [48, 48],
-                        iconAnchor: [24, 24],
-                        popupAnchor: [0, -24],
-                        className: 'user-location-marker'
-                    });
-
-                    userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
-                        .addTo(map)
-                        .bindPopup('📍 You are here');
-                } else {
-                    userMarkerRef.current.setLatLng([latitude, longitude]);
-                }
+                createUserMarker(pos.coords.latitude, pos.coords.longitude);
             },
             (error) => {
-                console.error('Geolocation error:', error);
+                console.error('Geolocation error (immediate):', error);
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+
+        // Then continue watching for updates
+        watchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+                createUserMarker(pos.coords.latitude, pos.coords.longitude);
+            },
+            (error) => {
+                console.error('Geolocation error (watch):', error);
             },
             {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 5000
+                maximumAge: 1000
             }
         );
 
@@ -198,6 +217,7 @@ const ExplorePage = () => {
             }
         };
     }, [map]);
+
 
 
 
@@ -222,6 +242,23 @@ const ExplorePage = () => {
             )}
 
             <div id="explore-map-container" ref={mapContainerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, zIndex: 0 }}></div>
+
+            {/* Directional Arrow - Always visible */}
+            {heading !== null && heading !== undefined && (
+                <div 
+                    className="directional-arrow-container"
+                    style={{ 
+                        transform: `rotate(${-heading}deg)`,
+                        opacity: permissionStatus === 'granted' ? 1 : 0.5
+                    }}
+                >
+                    <div className="directional-arrow-shaft">
+                        <div className="directional-arrow-head"></div>
+                        <div className="directional-arrow-body"></div>
+                    </div>
+                    <div className="directional-arrow-label">N</div>
+                </div>
+            )}
 
             {/* Exit Button - Hidden when sidebar is open */}
             {!selectedBuilding && (

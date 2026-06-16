@@ -93,4 +93,34 @@ describe('useMapAutoRotate Hook', () => {
 
     expect(result.current.isAutoFollow).toBe(false);
   });
+
+  it('interpolates coordinates and updates map and user marker smoothly', async () => {
+    vi.useFakeTimers();
+    const userCoords = { lat: 10.0, lon: 20.0 };
+    const mockMarker = {
+      setLatLng: vi.fn(),
+      getElement: vi.fn()
+    };
+    
+    const { rerender } = renderHook(
+      ({ coords }) => useMapAutoRotate(mockMap, coords, null, { userMarker: mockMarker }),
+      { initialProps: { coords: userCoords } }
+    );
+
+    // Rerender with new coordinates
+    const newCoords = { lat: 11.0, lon: 21.0 };
+    rerender({ coords: newCoords });
+    
+    // Advance timers to trigger requestAnimationFrame ticks
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // Verify marker and map setView were called with interpolated coordinates
+    expect(mockMarker.setLatLng).toHaveBeenCalled();
+    expect(mockMap.setView).toHaveBeenCalled();
+    
+    // Clean up
+    vi.useRealTimers();
+  });
 });

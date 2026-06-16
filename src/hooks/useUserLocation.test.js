@@ -60,7 +60,8 @@ describe('useUserLocation Hook', () => {
       lon: 56.78,
       accuracy: 10,
       speed: 1.5,
-      heading: 90
+      heading: 90,
+      gpsHeading: null
     });
   });
 
