@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet-rotate';
 
 const MapContext = createContext(null);
 
@@ -55,6 +56,9 @@ export const MapProvider = ({ children }) => {
             wheelPxPerZoomLevel: 120,
             zoomSnap: 1,
             zoomDelta: 1,
+            rotate: true,
+            touchRotate: true,
+            rotateControl: false,
         });
 
         leafletMap.setView([10.8772, 77.0218], 18);

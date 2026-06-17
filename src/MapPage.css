@@ -17,6 +17,19 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  --search-bar-height: 48px;
+  --chips-section-height: 52px;
+  --header-height: calc(var(--search-bar-height) + var(--chips-section-height));
+  --navbar-height: 60px;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --search-bar-height: 44px;
+    --chips-section-height: 48px;
+    --header-height: calc(var(--search-bar-height) + var(--chips-section-height));
+  }
 }
 
 /* ================= TOP HEADER ================= */
@@ -123,6 +136,35 @@ body {
   flex-direction: column;
   background: var(--surface-base);
   color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ================= FIXED HEADER SECTION ================= */
+.fixed-header-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface-base);
+  flex-shrink: 0;
+}
+
+/* ================= SCROLLABLE CONTENT WRAPPER ================= */
+.scrollable-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: var(--header-height);
+  margin-bottom: var(--navbar-height);
+  /* Smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* GPU acceleration */
+  will-change: scroll-position;
+  transform: translateZ(0);
 }
 
 /* ================= LOADING & ERROR STATES ================= */
@@ -380,6 +422,8 @@ body {
   min-height: 48px;
   position: relative;
   z-index: 10;
+  height: var(--search-bar-height);
+  box-sizing: border-box;
 }
 
 .search-bar:focus-within {
@@ -472,6 +516,11 @@ body {
   scrollbar-color: var(--accent-blue) rgba(0, 0, 0, 0.05);
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  height: var(--chips-section-height);
+  box-sizing: border-box;
+  background: var(--surface-base);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* Light Scrollbar for Webkit browsers */
@@ -556,9 +605,10 @@ body {
 
 /* ================= MAP SECTION ================= */
 .map-scroll-wrapper {
-  flex: 4;
-  overflow: auto;
+  flex: 0 1 auto;
   position: relative;
+  overflow: hidden;
+  background: var(--surface-base);
 }
 
 /* Map larger than viewport → scroll works */
@@ -633,6 +683,9 @@ body {
 .buildings-section {
   padding: 12px 0 20px;
   background: var(--surface-base);
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .buildings-section h3 {
@@ -955,13 +1008,14 @@ body.is-resizing * {
   /* Compact chips section */
   .chips {
     padding: 8px 8px;
-    margin-bottom: 6px;
+    margin-bottom: 0px;
   }
 
   /* ENLARGED MAP AREA - Maximum visibility on mobile */
   .map-scroll-wrapper {
-    flex: 4.5;
-    /* Much larger map on mobile */
+    flex: 0 1 auto;
+    height: 300px;
+    /* Larger map on mobile */
     margin: 6px 8px;
     /* Minimal margins for maximum space */
     border-radius: 4px;
@@ -997,6 +1051,7 @@ body.is-resizing * {
     height: 145px;
     padding: 0;
   }
+}
 
   .building-card-image-wrapper {
     height: 78px;
@@ -1021,11 +1076,6 @@ body.is-resizing * {
     font-size: 15px;
     bottom: 16px;
     right: 16px;
-  }
-
-  /* Ensure bottom nav doesn't overlap */
-  .app-container {
-    padding-bottom: 70px;
   }
 }
 
@@ -1176,7 +1226,7 @@ body.is-resizing * {
   left: 0;
   right: 0;
   width: 100%;
-  height: 70px;
+  height: var(--navbar-height);
   background: #000000;
   border-top: 1px solid #222;
   display: flex;
@@ -1184,6 +1234,7 @@ body.is-resizing * {
   align-items: center;
   z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom);
+  flex-shrink: 0;
 }
 
 .bottom-nav .nav-item {
@@ -1292,42 +1343,137 @@ body.is-resizing * {
   top: 80px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   z-index: 1000;
+  /* Performance optimization */
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .map-overlay-btn {
-  width: 46px;
-  height: 46px;
+  position: relative;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: rgba(28, 28, 30, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(28, 28, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  font-size: 18px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow, background, border-color;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  min-width: 54px;
 }
 
+/* Icon styling */
+.map-overlay-btn .map-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tooltip styling */
+.map-overlay-btn .icon-tooltip {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(12px);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+/* Hover state - Show tooltip and highlight button */
 .map-overlay-btn:hover {
-  background: var(--accent-blue);
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.9) 0%, rgba(10, 132, 255, 0.8) 100%);
   border-color: var(--accent-blue);
-  transform: scale(1.05);
+  transform: scale(1.08) translateX(-4px);
+  box-shadow: 0 6px 24px rgba(10, 132, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
+.map-overlay-btn:hover .icon-tooltip {
+  opacity: 1;
+}
+
+.map-overlay-btn:hover .map-icon {
+  transform: scale(1.1);
+}
+
+/* Active/Focus state */
+.map-overlay-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Press state */
 .map-overlay-btn:active {
   transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* Active state for recenter button */
 .map-overlay-btn.active {
-  background: var(--accent-blue);
+  background: linear-gradient(135deg, var(--accent-blue) 0%, rgba(10, 132, 255, 0.9) 100%);
   border-color: var(--accent-blue);
   color: white;
+  box-shadow: 0 6px 24px rgba(10, 132, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.map-overlay-btn.active .map-icon {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Pulse animation for active tracking */
+@keyframes pulse-glow {
+  0%, 100% {
+    text-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7);
+  }
+  50% {
+    text-shadow: 0 0 0 4px rgba(10, 132, 255, 0);
+  }
+}
+
+/* Individual button styling */
+.map-overlay-btn.zoom-in-btn {
+  /* Zoom in styling */
+}
+
+.map-overlay-btn.zoom-out-btn {
+  /* Zoom out styling */
+}
+
+.map-overlay-btn.recenter-btn {
+  /* Recenter/locate styling */
+}
+
+.map-overlay-btn.compass-btn {
+  /* Compass styling */
 }
 
 /* Recenter Floating Button */
@@ -1336,17 +1482,120 @@ body.is-resizing * {
   bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 22px;
-  background: var(--accent-blue);
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--accent-blue) 0%, rgba(10, 132, 255, 0.9) 100%);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 30px;
   font-weight: 700;
   font-size: 14px;
-  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(10, 132, 255, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
   z-index: 1000;
   cursor: pointer;
   display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-height: 48px;
+  letter-spacing: 0.3px;
+}
+
+.recenter-nav-btn:hover {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 12px 32px rgba(10, 132, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.recenter-nav-btn:active {
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.recenter-nav-btn svg {
+  font-size: 18px;
+  animation: slide-in-icon 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slide-in-icon {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile responsive adjustments for map overlay buttons */
+@media (max-width: 640px) {
+  .map-overlay-controls {
+    right: 12px;
+    top: 12px;
+    gap: 10px;
+  }
+
+  .map-overlay-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .map-overlay-btn .map-icon {
+    font-size: 20px;
+  }
+
+  /* Hide tooltips on mobile to save space */
+  .map-overlay-btn .icon-tooltip {
+    display: none;
+  }
+
+  .map-overlay-btn:hover {
+    transform: scale(1.06);
+  }
+
+  .recenter-nav-btn {
+    bottom: 70px;
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+
+  .recenter-nav-btn svg {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .map-overlay-controls {
+    right: 14px;
+    top: 14px;
+    gap: 11px;
+  }
+
+  .map-overlay-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+  }
+
+  .map-overlay-btn .map-icon {
+    font-size: 20px;
+  }
+
+  .map-overlay-btn .icon-tooltip {
+    font-size: 12px;
+    padding: 7px 11px;
+    right: 65px;
+  }
+}
   align-items: center;
   gap: 8px;
   animation: recenterFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1706,4 +1955,4 @@ body.is-resizing * {
 
 .nav-sim-speed-selector .speed-pill:hover:not(.active) {
   background: rgba(255, 255, 255, 0.1);
-}
+}
