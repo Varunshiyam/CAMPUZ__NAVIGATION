@@ -1,210 +1,105 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './ExplorePage.css';
 import { nodes, locationData } from './data';
+import { useMap } from "./components/MapProvider";
 import { FaHome, FaBuilding, FaThLarge, FaCompass, FaTimes, FaDirections } from 'react-icons/fa';
 
 const ExplorePage = () => {
     const navigate = useNavigate();
-    const mapRef = useRef(null);
+    const location = useLocation();
+    const { map, attachMap, detachMap, isInitialized } = useMap();
+    const mapContainerRef = useRef(null);
     const markersRef = useRef({});
     const userMarkerRef = useRef(null);
-    const initialized = useRef(false);
-    const lastGpsUpdateRef = useRef(0);
     const watchIdRef = useRef(null);
 
     const [selectedBuilding, setSelectedBuilding] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-
+    const loading = !isInitialized;
 
     /* ---------- GET CUSTOM ICON FOR LOCATION ---------- */
-    const getCustomIcon = (loc) => {
-        // Check for specific node names first
-        if (loc.id === 'SnacksBox') {
-            return L.icon({
-                iconUrl: '/Map_Icons/SnacksBox.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'OpenAuditorium') {
-            return L.icon({
-                iconUrl: '/Map_Icons/Open_Auditorium.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'Auditorium') {
-            return L.icon({
-                iconUrl: '/Map_Icons/Auditorium.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'Library') {
-            return L.icon({
-                iconUrl: '/Map_Icons/Library.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'TennisCourt') {
-            return L.icon({
-                iconUrl: '/Map_Icons/TennisCourt.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'Kabbadi Ground') {
-            return L.icon({
-                iconUrl: '/Map_Icons/KabbadiCourt.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        if (loc.id === 'TurfGround') {
-            return L.icon({
-                iconUrl: '/Map_Icons/FootBallCourt.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-
-        if (loc.id === 'Entrance' || loc.id === 'Exit') {
-            return L.icon({
-                iconUrl: '/Map_Icons/Gate.png',
-                iconSize: [28, 28],
-                iconAnchor: [14, 28],
-                popupAnchor: [0, -28],
-                className: 'custom-map-icon'
-            });
-        }
-
-        // Category-based mapping
-        const iconMap = {
-            'block': '/Map_Icons/Blocks.png',
-            'lab': '/Map_Icons/Computer_Lab.png',
-            'food': '/Map_Icons/FoodCourt.png',
-            'hostel': '/Map_Icons/Hostel.png',
-            'office': '/Map_Icons/Store.png',
-            'hall': '/Map_Icons/Computer_Lab.png',
-            'library': '/Map_Icons/Library.png',
-            'sport': '/Map_Icons/FootBallCourt.png',
-            'other': '/Map_Icons/Gate.png',
-        };
-
-        const iconUrl = iconMap[loc.category] || '/Map_Icons/Blocks.png';
-
-        return L.icon({
-            iconUrl: iconUrl,
-            iconSize: [28, 28],
-            iconAnchor: [14, 28],
-            popupAnchor: [0, -28],
-            className: 'custom-map-icon'
+    const getCustomIcon = () => {
+        return L.divIcon({
+            className: "minimal-professional-marker",
+            html: `
+                <div class="minimal-pin">
+                    <div class="minimal-pin-inner"></div>
+                </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12],
         });
     };
 
     /* ---------- MAP INITIALIZATION ---------- */
     useEffect(() => {
-        if (initialized.current) return;
-        initialized.current = true;
+        if (!isInitialized || !mapContainerRef.current || !map) return;
+        
+        attachMap(mapContainerRef.current);
 
-        const bounds = L.latLngBounds(
-            [10.876600, 77.01870],   // SW corner (bottom-left with slight padding)
-            [10.880510, 77.02320]    // NE corner (top-right with slight padding)
-        );
+        // --- Dynamic Zoom Scaling ---
+        const updateZoomScale = () => {
+            if (!map || !mapContainerRef.current) return;
+            const currentZoom = map.getZoom();
+            const scale = Math.pow(2, currentZoom - 18);
+            mapContainerRef.current.style.setProperty('--map-icon-scale', scale);
+        };
+        
+        updateZoomScale();
+        map.on('zoom', updateZoomScale);
 
-        const map = L.map('explore-map', {
-            maxBounds: bounds,
-            maxBoundsViscosity: 1.0,
-            minZoom: 16,
-            maxZoom: 19,
-            zoomControl: true,
-            scrollWheelZoom: true,
-            doubleClickZoom: true,
-            touchZoom: true,
-            inertia: true,
-            preferCanvas: true,
-            zoomAnimation: true,
-            zoomAnimationThreshold: 4,
-            fadeAnimation: true,
-            markerZoomAnimation: false,
-            wheelPxPerZoomLevel: 120,
-            zoomSnap: 1,
-            zoomDelta: 1,
-        });
+        /* ---------- CHUNKED CUSTOM ICON MARKERS ---------- */
+        const locations = Object.values(locationData);
+        let index = 0;
+        const chunkSize = 20;
 
-        map.setView([10.8772, 77.0218], 18);
-        mapRef.current = map;
+        const renderChunk = () => {
+            if (!mapContainerRef.current) return;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            minZoom: 16,
-            maxZoom: 19,
-            keepBuffer: 4,
-            updateWhenIdle: true,
-            updateWhenZooming: false,
-            updateInterval: 250,
-            maxNativeZoom: 19,
-            tileSize: 256,
-            crossOrigin: true,
-            errorTileUrl: '',
-            detectRetina: false,
-            noWrap: true,
-            bounds: bounds,
-            tapTolerance: 15,
-        }).addTo(map);
+            const endIndex = Math.min(index + chunkSize, locations.length);
+            for (let i = index; i < endIndex; i++) {
+                const loc = locations[i];
+                if (loc.type === 'indoor') continue;
 
-        setTimeout(() => setLoading(false), 0);
+                const node = nodes[loc.id];
+                if (!node) continue;
 
-        /* ---------- CUSTOM ICON MARKERS ---------- */
-        Object.values(locationData).forEach((loc) => {
-            if (loc.type === 'indoor') return;
+                const customIcon = getCustomIcon();
 
-            const node = nodes[loc.id];
-            if (!node) return;
+                const marker = L.marker([node.lat, node.lon], {
+                    icon: customIcon,
+                    title: loc.name,
+                    riseOnHover: true,
+                })
+                    .addTo(map)
+                    .on('click', () => {
+                        document.querySelector('.minimal-professional-marker.selected')?.classList.remove('selected');
 
-            const customIcon = getCustomIcon(loc);
+                        const iconElement = marker.getElement();
+                        if (iconElement) {
+                            iconElement.classList.add('selected');
+                        }
 
-            const marker = L.marker([node.lat, node.lon], {
-                icon: customIcon,
-                title: loc.name,
-                riseOnHover: true,
-            })
-                .addTo(map)
-                .on('click', () => {
-                    // Remove animation from previously selected marker
-                    document.querySelector('.custom-map-icon.selected')?.classList.remove('selected');
+                        setSelectedBuilding({
+                            id: loc.id,
+                            ...loc,
+                            lat: node.lat,
+                            lon: node.lon
+                        });
+                        map.flyTo([node.lat, node.lon], 18, {
+                            duration: 1,
+                            easeLinearity: 0.25
+                        });
+                    });
 
-                    // Add animation to newly selected marker
-                    const iconElement = marker.getElement();
-                    if (iconElement) {
-                        iconElement.classList.add('selected');
-                    }
+                markersRef.current[loc.id] = marker;
 
+                // Auto-select and highlight if navigated from another page via highlightId state
+                const highlightId = location.state?.highlightId;
+                if (highlightId && loc.id === highlightId) {
                     setSelectedBuilding({
                         id: loc.id,
                         ...loc,
@@ -215,61 +110,88 @@ const ExplorePage = () => {
                         duration: 1,
                         easeLinearity: 0.25
                     });
-                });
+                    setTimeout(() => {
+                        const iconElement = marker.getElement();
+                        if (iconElement) {
+                            iconElement.classList.add('selected');
+                        }
+                    }, 100);
+                }
+            }
 
-            markersRef.current[loc.id] = marker;
-        });
+            index = endIndex;
+            if (index < locations.length) {
+                requestAnimationFrame(() => {
+                    setTimeout(renderChunk, 0);
+                });
+            }
+        };
+
+        setTimeout(renderChunk, 100);
 
         return () => {
-            if (watchIdRef.current) {
-                navigator.geolocation.clearWatch(watchIdRef.current);
+            if (map) {
+                map.off('zoom', updateZoomScale);
             }
-            map.remove();
+            // Clear markers on unmount
+            Object.values(markersRef.current).forEach(m => {
+              if (map.hasLayer(m)) map.removeLayer(m);
+            });
+            markersRef.current = {};
+            detachMap();
         };
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isInitialized, attachMap, detachMap, map]);
 
-
-
-    /* ---------- USER LOCATION WITH GPS OPTIMIZATION ---------- */
+    /* ---------- USER LOCATION MARKER (IMMEDIATE) ---------- */
     useEffect(() => {
-        if (!mapRef.current) return;
+        if (!map) return;
 
-        const map = mapRef.current;
+        const createUserMarker = (latitude, longitude) => {
+            if (userMarkerRef.current) {
+                userMarkerRef.current.setLatLng([latitude, longitude]);
+            } else {
+                const userIcon = L.icon({
+                    iconUrl: '/Map_Icons/user_location_professional.svg',
+                    iconSize: [48, 48],
+                    iconAnchor: [24, 24],
+                    popupAnchor: [0, -24],
+                    className: 'user-location-marker'
+                });
 
-        watchIdRef.current = navigator.geolocation.watchPosition(
+                userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
+                    .addTo(map)
+                    .bindPopup('📍 You are here');
+            }
+        };
+
+        // Get position IMMEDIATELY without delay
+        navigator.geolocation.getCurrentPosition(
             (pos) => {
-                const { latitude, longitude } = pos.coords;
-
-                // GPS Optimization: Throttle updates to 1.5 seconds
-                const now = Date.now();
-                if (now - lastGpsUpdateRef.current < 1500) {
-                    return;
-                }
-                lastGpsUpdateRef.current = now;
-
-                if (!userMarkerRef.current) {
-                    const userIcon = L.icon({
-                        iconUrl: '/Map_Icons/user_location_professional.svg',
-                        iconSize: [48, 48],
-                        iconAnchor: [24, 24],
-                        popupAnchor: [0, -24],
-                        className: 'user-location-marker'
-                    });
-
-                    userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
-                        .addTo(map)
-                        .bindPopup('📍 You are here');
-                } else {
-                    userMarkerRef.current.setLatLng([latitude, longitude]);
-                }
+                createUserMarker(pos.coords.latitude, pos.coords.longitude);
             },
             (error) => {
-                console.error('Geolocation error:', error);
+                console.error('Geolocation error (immediate):', error);
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+
+        // Then continue watching for updates
+        watchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+                createUserMarker(pos.coords.latitude, pos.coords.longitude);
+            },
+            (error) => {
+                console.error('Geolocation error (watch):', error);
             },
             {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 5000
+                maximumAge: 1000
             }
         );
 
@@ -277,14 +199,19 @@ const ExplorePage = () => {
             if (watchIdRef.current) {
                 navigator.geolocation.clearWatch(watchIdRef.current);
             }
+            if (userMarkerRef.current && map.hasLayer(userMarkerRef.current)) {
+                map.removeLayer(userMarkerRef.current);
+                userMarkerRef.current = null;
+            }
         };
-    }, []);
+    }, [map]);
+
 
 
 
     /* ---------- HANDLE EXIT ---------- */
     const handleExit = () => {
-        navigate('/');
+        navigate('/home');
     };
 
     const handleDirections = (buildingId) => {
@@ -302,7 +229,7 @@ const ExplorePage = () => {
                 <div className="map-loading">Loading map...</div>
             )}
 
-            <div id="explore-map"></div>
+            <div id="explore-map-container" ref={mapContainerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, zIndex: 0 }}></div>
 
             {/* Exit Button - Hidden when sidebar is open */}
             {!selectedBuilding && (
@@ -315,14 +242,14 @@ const ExplorePage = () => {
             {selectedBuilding && (
                 <>
                     <div className="building-overlay" onClick={() => {
-                        document.querySelector('.custom-map-icon.selected')?.classList.remove('selected');
+                        document.querySelector('.minimal-professional-marker.selected')?.classList.remove('selected');
                         setSelectedBuilding(null);
                     }} />
                     <div className="building-detail-sheet">
                         <div className="sheet-handle"></div>
 
                         <button className="close-sheet-btn" onClick={() => {
-                            document.querySelector('.custom-map-icon.selected')?.classList.remove('selected');
+                            document.querySelector('.minimal-professional-marker.selected')?.classList.remove('selected');
                             setSelectedBuilding(null);
                         }}>
                             X
@@ -336,7 +263,7 @@ const ExplorePage = () => {
                                         src={(() => {
                                             // Specific nodes
                                             if (selectedBuilding.id === 'SnacksBox') return '/Map_Icons/SnacksBox.png';
-                                            if (selectedBuilding.id === 'OpenAuditorium') return '/Map_Icons/Open_Auditorium.png';
+                                            if (selectedBuilding.id === 'OpenAuditorium') return '/Map_Icons/Open-Auditorium.png';
                                             if (selectedBuilding.id === 'Auditorium') return '/Map_Icons/Auditorium.png';
                                             if (selectedBuilding.id === 'Library') return '/Map_Icons/Library.png';
                                             if (selectedBuilding.id === 'TennisCourt') return '/Map_Icons/TennisCourt.png';
@@ -352,7 +279,7 @@ const ExplorePage = () => {
                                                 'food': 'FoodCourt',
                                                 'hostel': 'Hostel',
                                                 'office': 'Store',
-                                                'hall': 'Open_Auditorium',
+                                                'hall': 'Open-Auditorium',
                                                 'library': 'Library',
                                                 'sport': 'FootBallCourt',
                                                 'other': 'Gate'
@@ -402,7 +329,7 @@ const ExplorePage = () => {
 
             {/* Bottom Navigation */}
             <nav className="bottom-nav">
-                <div className="nav-item" onClick={() => navigate('/')}>
+                <div className="nav-item" onClick={() => navigate('/home')}>
                     <FaHome />
                     <span>Home</span>
                 </div>

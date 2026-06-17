@@ -68,7 +68,7 @@ The goal is to transform campus navigation into a smooth, app-like experience wi
 ---
 
 
-## 🛠 SAAS - Developer Tools (Internal Feature)
+## 🛠 Developer Tools (Internal Feature)
 
 To avoid manually entering GPS coordinates and adjacency values from Google Maps, a **visual helper tool** was developed.
 

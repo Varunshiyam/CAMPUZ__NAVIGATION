@@ -31,6 +31,7 @@ export function useSearchPlaceholder(placeholders = defaultPlaceholders, typingS
       }, delayBetween);
     } else if (isDeleting && text === '') {
       clearTimeout(timer);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDeleting(false);
       setLoopNum(loopNum + 1);
     }

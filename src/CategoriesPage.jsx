@@ -11,11 +11,8 @@ import {
   FaFlask,
   FaUtensils,
   FaGraduationCap,
-  FaMicrophone,
   FaChalkboard,
-  FaDesktop,
   FaChevronRight,
-  FaExternalLinkAlt,
   FaHome,
   FaCompass,
   FaUserTie,
@@ -29,7 +26,7 @@ import { useSearchPlaceholder } from "./hooks/useSearchPlaceholder";
 /* ---------------- DATA MAPPING ---------------- */
 const CATEGORY_CONFIG = {
   hall: { title: "Halls & Auditoriums", icon: <FaUniversity /> },
-  sports: { title: "Sports & Grounds", icon: <FaRunning /> },
+  sport: { title: "Sports & Grounds", icon: <FaRunning /> },
   block: { title: "Academic Blocks", icon: <FaBuilding /> },
   library: { title: "Library", icon: <FaGraduationCap /> },
   lab: { title: "Labs & Centres", icon: <FaFlask /> },
@@ -61,7 +58,7 @@ const FILTERS = [
   { label: "Food", value: "food", icon: <FaUtensils /> },
   { label: "Faculty", value: "faculty", icon: <FaUserTie /> },
   { label: "Blocks", value: "block", icon: <FaBuilding /> },
-  { label: "Sports", value: "sports", icon: <FaRunning /> },
+  { label: "Sports", value: "sport", icon: <FaRunning /> },
   { label: "Library", value: "library", icon: <FaGraduationCap /> }
 ];
 
@@ -358,8 +355,8 @@ export default function CategoriesPage() {
       {/* BOTTOM NAV */}
       <nav className="bottom-nav">
         <div
-          className={`nav-item ${location.pathname === "/" ? "active" : ""}`}
-          onClick={() => navigate("/")}
+          className={`nav-item ${location.pathname === "/home" ? "active" : ""}`}
+          onClick={() => navigate("/home")}
         >
           <FaHome />
           <span>Home</span>

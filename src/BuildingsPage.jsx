@@ -235,8 +235,8 @@ export default function BuildingsPage() {
       {/* NAVBAR */}
       <nav className="bottom-nav">
         <div
-          className={`nav-item ${location.pathname === "/" ? "active" : ""}`}
-          onClick={() => navigate("/")}
+          className={`nav-item ${location.pathname === "/home" ? "active" : ""}`}
+          onClick={() => navigate("/home")}
         >
           <FaHome />
           <span>Home</span>

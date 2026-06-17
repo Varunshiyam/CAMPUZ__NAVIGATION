@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { nodes, adjacency } from "./data";
+import { nodes, adjacency, locationData } from "./data";
+import { useMap } from "./components/MapProvider";
 import "./Map.css";
 
 import {
@@ -10,8 +11,22 @@ import {
   FaBuilding,
   FaThLarge,
   FaMap,
-  FaTimes
+  FaTimes,
+  FaPlus,
+  FaMinus,
+  FaLocationArrow,
+  FaCompass,
+  FaArrowLeft,
+  FaArrowRight,
+  FaArrowUp,
+  FaMapMarkerAlt,
+  FaPlay,
+  FaPause,
+  FaStop
 } from "react-icons/fa";
+import { useCompassHeading } from "./hooks/useCompassHeading";
+import { useUserLocation } from "./hooks/useUserLocation";
+import { useMapAutoRotate } from "./hooks/useMapAutoRotate";
 
 /* FIX LEAFLET ICON */
 delete L.Icon.Default.prototype._getIconUrl;
@@ -24,16 +39,29 @@ L.Icon.Default.mergeOptions({
 /* ---------------- HELPERS ---------------- */
 const toRad = (d) => (d * Math.PI) / 180;
 
-const haversine = (a, b, c, d) => {
+const haversine = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3;
-  const x = toRad(c - a);
-  const y = toRad(d - b);
-  const m =
-    Math.sin(x / 2) ** 2 +
-    Math.cos(toRad(a)) *
-    Math.cos(toRad(c)) *
-    Math.sin(y / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(m));
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 2 * R * Math.asin(Math.sqrt(a));
+};
+
+const calculateBearing = (lat1, lon1, lat2, lon2) => {
+  const dLon = toRad(lon2 - lon1);
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+  
+  const y = Math.sin(dLon) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+            Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+  
+  const brng = Math.atan2(y, x) * 180 / Math.PI;
+  return (brng + 360) % 360;
 };
 
 const buildGraph = (localNodes, localAdj) => {
@@ -85,16 +113,14 @@ const CampusMap = () => {
   const navigate = useNavigate();
   const goal = location.state?.destination;
 
-  const mapRef = useRef(null);
+  const { map, attachMap, detachMap, isInitialized } = useMap();
+  const mapContainerRef = useRef(null);
   const routeRef = useRef(null);
   const userRef = useRef(null);
   const destRef = useRef(null);
-  const watchIdRef = useRef(null);
 
   // GPS Optimization: Precompute graph once
   const graphRef = useRef(null);
-  // GPS Optimization: Throttle updates (1.5 seconds)
-  const lastUpdateRef = useRef(0);
   // GPS Optimization: Track current path for smart recalculation
   const currentPathRef = useRef(null);
   const mapInitializedRef = useRef(false);
@@ -102,6 +128,55 @@ const CampusMap = () => {
   const isInvalid = !goal || !nodes[goal];
   const [loading, setLoading] = useState(!isInvalid);
   const [error, setError] = useState(isInvalid ? "Invalid destination" : null);
+
+  // Custom walking navigation hooks
+  const { heading, permissionStatus, requestPermission } = useCompassHeading();
+  const { location: userLocation, error: gpsError, loading: gpsLoading } = useUserLocation({ throttleMs: 1500 });
+
+  // Simulation State
+  const [simulationActive, setSimulationActive] = useState(false);
+  const [simulatedLocation, setSimulatedLocation] = useState(null);
+  const [simulatedHeading, setSimulatedHeading] = useState(null);
+  const [simSegmentIndex, setSimSegmentIndex] = useState(0);
+  const [simProgress, setSimProgress] = useState(0);
+  const [simSpeedMultiplier, setSimSpeedMultiplier] = useState(1);
+
+  // Fallback start support: if real GPS is not available, default to Entrance node
+  const fallbackLocation = useMemo(() => ({
+    lat: nodes["Entrance"].lat,
+    lon: nodes["Entrance"].lon,
+    accuracy: 5,
+    speed: 0,
+    heading: 0
+  }), []);
+
+  // Determine active location and heading source
+  const hasGps = userLocation !== null;
+  const activeLocation = useMemo(() => {
+    if (simulationActive && simulatedLocation) return simulatedLocation;
+    if (hasGps) return userLocation;
+    // Only use fallback if GPS has finished loading (either has error or timeout)
+    if (!gpsLoading) return fallbackLocation;
+    return null;
+  }, [simulationActive, simulatedLocation, userLocation, hasGps, gpsLoading, fallbackLocation]);
+
+  const activeHeading = useMemo(() => {
+    if (simulationActive && simulatedHeading !== null) return simulatedHeading;
+    if (heading !== null) return heading;
+    if (activeLocation && activeLocation.heading !== null && !isNaN(activeLocation.heading)) return activeLocation.heading;
+    return 0;
+  }, [simulationActive, simulatedHeading, heading, activeLocation]);
+
+  const { isAutoFollow, recenter, resetNorth, mapBearing } = useMapAutoRotate(map, activeLocation, activeHeading, {
+    enabled: true,
+    userMarker: userRef
+  });
+
+  useEffect(() => {
+    if (gpsError && !hasGps) {
+      console.warn("GPS error, using campus entrance fallback:", gpsError);
+    }
+  }, [gpsError, hasGps]);
 
   /* -------- HELPER: DISTANCE FROM PATH -------- */
   const distanceFromPath = (userPos, path) => {
@@ -117,37 +192,180 @@ const CampusMap = () => {
     return minDist;
   };
 
+  /* -------- HELPERS FOR TURN HUD -------- */
+  const getNodeName = (nodeId) => {
+    if (!nodeId) return 'the pathway';
+    if (locationData && locationData[nodeId]) {
+      return locationData[nodeId].name;
+    }
+    if (nodeId.startsWith('EX')) return 'Exit Route';
+    if (nodeId.startsWith('BH')) return 'Boys Hostel Pathway';
+    if (nodeId.startsWith('AH')) return 'Academic Hall Pathway';
+    if (nodeId.startsWith('C') && nodeId !== 'COE') return 'Block C Pathway';
+    if (nodeId.startsWith('E') && nodeId !== 'Entrance' && nodeId !== 'Exit') return 'Block E Pathway';
+    if (nodeId.startsWith('M')) return 'Block M Pathway';
+    if (nodeId.startsWith('L') && nodeId !== 'Library') return 'Library Pathway';
+    if (nodeId.startsWith('A') && nodeId !== 'Auditorium') return 'Block A Pathway';
+    if (nodeId.startsWith('B')) return 'Block B Pathway';
+    return 'the pathway';
+  };
+
+  const getTurnIcon = (type) => {
+    switch (type) {
+      case 'left':
+        return <FaArrowLeft />;
+      case 'right':
+        return <FaArrowRight />;
+      case 'bear-left':
+        return <FaArrowLeft style={{ transform: 'rotate(45deg)' }} />;
+      case 'bear-right':
+        return <FaArrowRight style={{ transform: 'rotate(-45deg)' }} />;
+      case 'arrive':
+        return <FaMapMarkerAlt className="hud-dest-icon" />;
+      case 'straight':
+      default:
+        return <FaArrowUp />;
+    }
+  };
+
+  const getTurnInstruction = (info) => {
+    if (!info) return '';
+    if (info.turnType === 'arrive') {
+      return `Arriving at ${info.nextNodeName}`;
+    }
+    const action = {
+      'left': 'turn left',
+      'right': 'turn right',
+      'bear-left': 'bear left',
+      'bear-right': 'bear right',
+      'straight': 'continue straight'
+    }[info.turnType] || 'continue straight';
+
+    return `In ${info.distanceToNextNode}m, ${action} onto ${info.nextNodeName}`;
+  };
+
+  /* -------- DYNAMIC HUD SELECTOR -------- */
+  const navigationInfo = useMemo(() => {
+    if (!currentPathRef.current || currentPathRef.current.length === 0) return null;
+
+    const pathNodes = currentPathRef.current.filter(n => n !== 'User');
+    if (pathNodes.length === 0) return null;
+
+    // Find nearest path node index to activeLocation
+    let nearestIndex = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < pathNodes.length; i++) {
+      const node = nodes[pathNodes[i]];
+      if (!node) continue;
+      const d = haversine(activeLocation.lat, activeLocation.lon, node.lat, node.lon);
+      if (d < minDist) {
+        minDist = d;
+        nearestIndex = i;
+      }
+    }
+
+    const isLastNode = nearestIndex === pathNodes.length - 1;
+    const nextNodeIndex = isLastNode ? nearestIndex : nearestIndex + 1;
+    const nextNodeId = pathNodes[nextNodeIndex];
+    const nextNode = nodes[nextNodeId];
+
+    const distanceToNextNode = nextNode 
+      ? haversine(activeLocation.lat, activeLocation.lon, nextNode.lat, nextNode.lon)
+      : 0;
+
+    let remainingDistance = distanceToNextNode;
+    for (let i = nextNodeIndex; i < pathNodes.length - 1; i++) {
+      const nA = nodes[pathNodes[i]];
+      const nB = nodes[pathNodes[i + 1]];
+      if (nA && nB) {
+        remainingDistance += haversine(nA.lat, nA.lon, nB.lat, nB.lon);
+      }
+    }
+
+    const totalDurationSeconds = remainingDistance / 1.4;
+    const remainingMinutes = Math.ceil(totalDurationSeconds / 60);
+
+    let turnType = 'straight';
+    let nextNodeName = getNodeName(nextNodeId);
+
+    if (isLastNode) {
+      turnType = 'arrive';
+    } else if (nextNodeIndex < pathNodes.length - 1) {
+      const nodeA = nodes[pathNodes[nearestIndex]];
+      const nodeB = nodes[pathNodes[nextNodeIndex]];
+      const nodeC = nodes[pathNodes[nextNodeIndex + 1]];
+      if (nodeA && nodeB && nodeC) {
+        const bearing1 = calculateBearing(nodeA.lat, nodeA.lon, nodeB.lat, nodeB.lon);
+        const bearing2 = calculateBearing(nodeB.lat, nodeB.lon, nodeC.lat, nodeC.lon);
+        let turnAngle = bearing2 - bearing1;
+        while (turnAngle < -180) turnAngle += 360;
+        while (turnAngle > 180) turnAngle -= 360;
+
+        if (turnAngle > 45) {
+          turnType = 'right';
+        } else if (turnAngle < -45) {
+          turnType = 'left';
+        } else if (turnAngle > 15) {
+          turnType = 'bear-right';
+        } else if (turnAngle < -15) {
+          turnType = 'bear-left';
+        }
+      }
+    }
+
+    let totalPathDist = 0;
+    for (let i = 0; i < pathNodes.length - 1; i++) {
+      const nA = nodes[pathNodes[i]];
+      const nB = nodes[pathNodes[i + 1]];
+      if (nA && nB) totalPathDist += haversine(nA.lat, nA.lon, nB.lat, nB.lon);
+    }
+    const progressPercent = totalPathDist > 0 
+      ? Math.min(100, Math.max(0, ((totalPathDist - remainingDistance) / totalPathDist) * 100))
+      : 0;
+
+    return {
+      distanceToNextNode: Math.round(distanceToNextNode),
+      remainingDistance: Math.round(remainingDistance),
+      remainingMinutes,
+      nextNodeName,
+      turnType,
+      progressPercent,
+      isLastNode
+    };
+  }, [activeLocation]);
+
   /* -------- ROUTE CALCULATION (OPTIMIZED) -------- */
   const updateRoute = (user) => {
-    console.log("🔄 updateRoute called with user:", user);
-    console.log("📍 Goal destination:", goal);
-
     // GPS Optimization: Check if we need to recalculate route
     const DEVIATION_THRESHOLD = 8; // meters
     const shouldRecalculate = !currentPathRef.current ||
       distanceFromPath(user, currentPathRef.current) > DEVIATION_THRESHOLD;
 
-    console.log("🔍 Should recalculate:", shouldRecalculate);
-
     // Always update user marker position (visual update only)
     if (!userRef.current) {
-      userRef.current = L.marker([user.lat, user.lon])
-        .addTo(mapRef.current)
+      const userIcon = L.divIcon({
+        className: 'user-location-marker-container',
+        html: `
+          <div class="user-direction-indicator">
+            <div class="user-pulse-ring"></div>
+            <div class="user-direction-beam"></div>
+            <div class="user-blue-dot"></div>
+          </div>
+        `,
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+        popupAnchor: [0, -24],
+      });
+
+      userRef.current = L.marker([user.lat, user.lon], { icon: userIcon })
+        .addTo(map)
         .bindPopup("You");
-      console.log("✅ Created user marker");
-    } else {
-      // Direct Leaflet update - no React re-render
-      userRef.current.setLatLng([user.lat, user.lon]);
-      console.log("✅ Updated user marker position");
     }
 
     // Only recalculate route if user deviated significantly
     if (!shouldRecalculate) {
-      console.log("⏭️ Skipping route recalculation (route still valid)");
-      return; // Route is still valid, just updated marker
+      return; // Route is still valid
     }
-
-    // GPS Optimization: Precomputed graph not used in this scope directly since we build a temp one
 
     // Find nearest node to user
     let nearest = null;
@@ -165,8 +383,6 @@ const CampusMap = () => {
       }
     }
 
-    console.log("📌 Nearest node to user:", nearest, "distance:", min.toFixed(2), "meters");
-
     // Build temporary graph with user position
     const tempNodes = { ...nodes, User: user };
     const tempAdj = { ...adjacency };
@@ -176,11 +392,7 @@ const CampusMap = () => {
     const tempGraph = buildGraph(tempNodes, tempAdj);
     const path = astar(tempGraph, "User", goal);
 
-    console.log("🛤️ Path calculated:", path);
-    console.log("📏 Path length:", path.length);
-
     if (!path.length) {
-      console.error("❌ No path found from user to goal!");
       setError("No route found to destination");
       return;
     }
@@ -193,124 +405,201 @@ const CampusMap = () => {
       tempNodes[p].lon,
     ]);
 
-    console.log("🗺️ Creating polyline with", latlngs.length, "points");
-
     if (routeRef.current) {
-      console.log("🗑️ Removing old route");
-      mapRef.current.removeLayer(routeRef.current);
+      routeRef.current.setLatLngs(latlngs);
+    } else {
+      routeRef.current = L.polyline(latlngs, {
+        color: "#007AFF",
+        weight: 6,
+        opacity: 0.8,
+        smoothFactor: 1
+      }).addTo(map);
     }
-
-    routeRef.current = L.polyline(latlngs, {
-      color: "red",
-      weight: 5,
-      opacity: 0.8,
-      smoothFactor: 1
-    }).addTo(mapRef.current);
-
-    console.log("✅ RED POLYLINE CREATED AND ADDED TO MAP!");
-    console.log("🔴 Polyline options:", routeRef.current.options);
 
     // Trigger navigation completed event for feedback reminder
     window.dispatchEvent(new Event('navigationCompleted'));
   };
 
-  /* -------- MAP INIT + LIVE TRACKING (OPTIMIZED) -------- */
+  /* -------- SIMULATION TIMER EFFECT -------- */
   useEffect(() => {
-    // GPS Optimization: Prevent map recreation
-    if (mapInitializedRef.current) return;
+    if (!simulationActive || !currentPathRef.current) return;
 
+    const pathNodes = currentPathRef.current.filter((n) => n !== "User");
+    if (pathNodes.length < 2) {
+      setSimulationActive(false);
+      return;
+    }
+
+    let lastTime = performance.now();
+    let segmentIndex = simSegmentIndex;
+    let progress = simProgress;
+
+    const baseSpeed = 1.4; // walking speed ~1.4 m/s
+    let animationFrameId;
+
+    const tick = (time) => {
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+
+      if (segmentIndex >= pathNodes.length - 1) {
+        setSimulationActive(false);
+        alert("🎉 You have arrived at your destination!");
+        window.dispatchEvent(new Event('navigationCompleted'));
+        return;
+      }
+
+      const nodeA = nodes[pathNodes[segmentIndex]];
+      const nodeB = nodes[pathNodes[segmentIndex + 1]];
+
+      if (!nodeA || !nodeB) {
+        setSimulationActive(false);
+        return;
+      }
+
+      const segmentDistance = haversine(nodeA.lat, nodeA.lon, nodeB.lat, nodeB.lon);
+
+      if (segmentDistance <= 0) {
+        segmentIndex++;
+        progress = 0;
+        lastTime = performance.now();
+        setSimSegmentIndex(segmentIndex);
+        setSimProgress(progress);
+        animationFrameId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const speed = baseSpeed * simSpeedMultiplier;
+      const distanceMoved = speed * dt;
+
+      progress += distanceMoved / segmentDistance;
+
+      if (progress >= 1.0) {
+        let overflowDistance = (progress - 1.0) * segmentDistance;
+        segmentIndex++;
+
+        if (segmentIndex >= pathNodes.length - 1) {
+          setSimSegmentIndex(pathNodes.length - 1);
+          setSimProgress(1.0);
+          setSimulationActive(false);
+          alert("🎉 You have arrived at your destination!");
+          window.dispatchEvent(new Event('navigationCompleted'));
+          return;
+        }
+
+        const nextA = nodes[pathNodes[segmentIndex]];
+        const nextB = nodes[pathNodes[segmentIndex + 1]];
+        const nextSegmentDist = haversine(nextA.lat, nextA.lon, nextB.lat, nextB.lon);
+        progress = nextSegmentDist > 0 ? overflowDistance / nextSegmentDist : 0;
+      }
+
+      setSimSegmentIndex(segmentIndex);
+      setSimProgress(progress);
+
+      const curA = nodes[pathNodes[segmentIndex]];
+      const curB = nodes[pathNodes[segmentIndex + 1]];
+      const lat = curA.lat + (curB.lat - curA.lat) * progress;
+      const lon = curA.lon + (curB.lon - curA.lon) * progress;
+
+      setSimulatedLocation({ lat, lon });
+
+      const bearing = calculateBearing(curA.lat, curA.lon, curB.lat, curB.lon);
+      setSimulatedHeading(bearing);
+
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    animationFrameId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [simulationActive, simSegmentIndex, simProgress, simSpeedMultiplier]);
+
+  const handleStartSimulation = () => {
+    if (!currentPathRef.current || currentPathRef.current.length < 2) {
+      alert("No active path calculated yet!");
+      return;
+    }
+    setSimSegmentIndex(0);
+    setSimProgress(0);
+    setSimulationActive(true);
+  };
+
+  const handleStopSimulation = () => {
+    setSimulationActive(false);
+    setSimulatedLocation(null);
+    setSimulatedHeading(null);
+  };
+
+  /* -------- MAP INIT + LIVE ROUTING (OPTIMIZED) -------- */
+  useEffect(() => {
+    if (mapInitializedRef.current) return;
     if (isInvalid) return;
 
-    // GPS Optimization: Precompute graph once
     if (!graphRef.current) {
       graphRef.current = buildGraph(nodes, adjacency);
     }
 
-    const bounds = L.latLngBounds(
-      [10.8725, 77.0160], // SOUTH expanded
-      [10.8845, 77.0265]  // NORTH safe buffer
-    );
+    const initTimer = setTimeout(() => {
+      if (!mapContainerRef.current || !map) return;
+      attachMap(mapContainerRef.current);
+      
+      mapInitializedRef.current = true;
 
-    const map = L.map("map", {
-      maxBounds: bounds,
-      maxBoundsViscosity: 1.0, // Strict boundary enforcement
-      minZoom: 17,
-      maxZoom: 19,
-      zoomControl: true,
-      preferCanvas: true,
-      zoomAnimation: true,
-      fadeAnimation: true,
-      markerZoomAnimation: false,
-    }).setView([10.8795, 77.0213], 17);
+      const destIcon = L.divIcon({
+        className: "dest-marker-container",
+        html: `
+          <div class="dest-marker-inner">
+            <img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png" alt="destination" style="width: 25px; height: 41px;" />
+          </div>
+        `,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      });
 
-    mapRef.current = map;
-    mapInitializedRef.current = true;
+      destRef.current = L.marker([
+        nodes[goal].lat,
+        nodes[goal].lon,
+      ], { icon: destIcon }).addTo(map);
 
-    // GPS Optimization: Enhanced tile layer settings
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      minZoom: 17,
-      keepBuffer: 4,              // Aggressive caching
-      updateWhenIdle: true,       // Load tiles after movement stops
-      updateWhenZooming: false,   // No reload during zoom
-      updateInterval: 250,        // Throttle tile updates
-      crossOrigin: true,
-      errorTileUrl: '',
-      detectRetina: false,
-      noWrap: true,
-      bounds: bounds,
-    }).addTo(map);
-
-    destRef.current = L.marker([
-      nodes[goal].lat,
-      nodes[goal].lon,
-    ]).addTo(map);
-
-    // GPS Optimization: Throttled watchPosition
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const now = Date.now();
-        const timeSinceLastUpdate = now - lastUpdateRef.current;
-
-        // Throttle: only update every 1.5 seconds
-        if (timeSinceLastUpdate < 1500) {
-          return; // Skip this update
-        }
-
-        lastUpdateRef.current = now;
-
-        const user = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        };
-
-        updateRoute(user);
+      if (activeLocation) {
+        updateRoute(activeLocation);
         setLoading(false);
-      },
-      (err) => {
-        console.error("GPS error:", err);
-        setError("Location unavailable. Enable GPS for live routing.");
-        setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 2000,      // Reuse recent location (2s)
-        timeout: 5000,
       }
-    );
+    }, 300);
 
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+      clearTimeout(initTimer);
+      
+      if (map) {
+        if (destRef.current && map.hasLayer(destRef.current)) {
+          map.removeLayer(destRef.current);
+          destRef.current = null;
+        }
+        if (userRef.current && map.hasLayer(userRef.current)) {
+          map.removeLayer(userRef.current);
+          userRef.current = null;
+        }
+        if (routeRef.current && map.hasLayer(routeRef.current)) {
+          map.removeLayer(routeRef.current);
+          routeRef.current = null;
+        }
       }
-      map.remove();
+      
+      detachMap();
       mapInitializedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goal]);
+  }, [goal, isInitialized, map, attachMap, detachMap]);
+
+  useEffect(() => {
+    if (!map || !activeLocation || !mapInitializedRef.current) return;
+    updateRoute(activeLocation);
+    setLoading(false);
+  }, [map, activeLocation]);
 
   const handleExit = () => {
-    navigate("/");
+    navigate("/home");
   };
 
   return (
@@ -337,10 +626,149 @@ const CampusMap = () => {
         <FaTimes /> Exit
       </button>
 
-      <div id="map"></div>
+      <div 
+        className="map-nav-wrapper" 
+        style={{ width: '100%', height: '100%', flex: 1, minHeight: '60vh', position: 'relative', overflow: 'hidden' }}
+      >
+        <div id="map-container-CampusMap" ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}></div>
+
+        {/* TOP HUD turn instruction */}
+        {navigationInfo && !loading && (
+          <div className="nav-top-hud">
+            <div className="nav-top-hud-icon-container">
+              {getTurnIcon(navigationInfo.turnType)}
+            </div>
+            <div className="nav-top-hud-content">
+              <div className="nav-top-hud-instruction">
+                {getTurnInstruction(navigationInfo)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Map Controls */}
+        {map && (
+          <div className="map-overlay-controls" style={{ top: '90px' }}>
+            <button className="map-overlay-btn" onClick={() => map.zoomIn()} title="Zoom In">
+              <FaPlus />
+            </button>
+            <button className="map-overlay-btn" onClick={() => map.zoomOut()} title="Zoom Out">
+              <FaMinus />
+            </button>
+            <button 
+              className={`map-overlay-btn ${isAutoFollow ? 'active' : ''}`} 
+              onClick={recenter} 
+              title="Follow Me"
+            >
+              <FaLocationArrow />
+            </button>
+            <button 
+              className="map-overlay-btn" 
+              onClick={resetNorth} 
+              title="North Up"
+            >
+              <FaCompass 
+                className="compass-icon-rotate" 
+                style={{ transform: `rotate(${-(mapBearing || 0)}deg)` }} 
+              />
+            </button>
+          </div>
+        )}
+
+        {/* Device Orientation Permission Request Prompt */}
+        {permissionStatus === 'prompt' && !simulationActive && (
+          <button 
+            className="recenter-nav-btn" 
+            style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: '#FFD700', color: '#000000' }}
+            onClick={requestPermission}
+          >
+            <FaCompass /> Enable Compass Calibration
+          </button>
+        )}
+
+        {/* BOTTOM HUD details and simulator control */}
+        {navigationInfo && !loading && (
+          <div className="nav-bottom-sheet">
+            <div className="nav-bottom-sheet-main">
+              <div className="nav-eta-container">
+                <span className="nav-eta-value">{navigationInfo.remainingMinutes}</span>
+                <span className="nav-eta-unit">min</span>
+              </div>
+              <div className="nav-stats-container">
+                <div className="nav-distance-text">
+                  {navigationInfo.remainingDistance >= 1000 
+                    ? `${(navigationInfo.remainingDistance / 1000).toFixed(1)} km` 
+                    : `${navigationInfo.remainingDistance} m`}
+                </div>
+                <div className="nav-destination-label">
+                  to {locationData[goal]?.name || goal}
+                  {!hasGps && <span className="gps-badge-amber">GPS Fallback</span>}
+                </div>
+              </div>
+              
+              <div className="nav-controls-divider"></div>
+
+              {/* Simulation Play/Pause/Stop */}
+              <div className="nav-sim-actions">
+                {!simulationActive ? (
+                  <button 
+                    className="nav-sim-btn play-btn" 
+                    onClick={handleStartSimulation}
+                    title="Simulate Movement"
+                  >
+                    <FaPlay /> Simulate
+                  </button>
+                ) : (
+                  <button 
+                    className="nav-sim-btn pause-btn" 
+                    onClick={() => setSimulationActive(false)}
+                    title="Pause Simulation"
+                  >
+                    <FaPause /> Pause
+                  </button>
+                )}
+                
+                {simulationActive && (
+                  <button 
+                    className="nav-sim-btn stop-btn" 
+                    onClick={handleStopSimulation}
+                    title="Stop Simulation"
+                  >
+                    <FaStop /> Stop
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="nav-progress-bar-container">
+              <div 
+                className="nav-progress-bar-fill" 
+                style={{ width: `${navigationInfo.progressPercent}%` }}
+              ></div>
+            </div>
+
+            {/* Speed Multipliers */}
+            {simulationActive && (
+              <div className="nav-sim-speed-selector">
+                <span className="speed-label">Speed:</span>
+                {[1, 2, 5, 10].map((mult) => (
+                  <button
+                    key={mult}
+                    className={`speed-pill ${simSpeedMultiplier === mult ? 'active' : ''}`}
+                    onClick={() => setSimSpeedMultiplier(mult)}
+                  >
+                    {mult}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <nav className="bottom-nav">
-        <div className="nav-item" onClick={() => navigate("/")}>
+        <div className="nav-item" onClick={() => navigate("/home")}>
           <FaHome /><span>Home</span>
         </div>
         <div className="nav-item" onClick={() => navigate("/buildings")}>
