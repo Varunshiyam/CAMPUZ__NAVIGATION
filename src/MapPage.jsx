@@ -74,7 +74,7 @@ export default function MapPage() {
   // Custom Navigation hooks
   const { heading, permissionStatus, requestPermission } = useCompassHeading();
   const { location: userLocation, error: gpsError } = useUserLocation({ throttleMs: 1500 });
-  const { isAutoFollow, recenter, resetNorth } = useMapAutoRotate(map, userLocation, heading, {
+  const { isAutoFollow, recenter, resetNorth, mapBearing } = useMapAutoRotate(map, userLocation, heading, {
     enabled: true,
     userMarker: userMarkerRef
   });
@@ -541,77 +541,102 @@ export default function MapPage() {
         </div>
       )}
 
-      <div className="search-bar">
-        <FaSearch className="search-icon" />
-        <input
-          placeholder={searchPlaceholder}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* FIXED HEADER SECTION */}
+      <div className="fixed-header-section">
+        <div className="search-bar">
+          <FaSearch className="search-icon" />
+          <input
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="chips">
+          {sortedLocations.slice(0, 20).map((loc) => (
+            <button
+              key={loc.id}
+              className={`chip ${goal === loc.id ? "active" : ""} ${loc.type === 'indoor' ? 'indoor-chip' : ''}`}
+              onClick={() => setGoal(loc.id)}
+            >
+              {loc.type === 'indoor' ? (
+                <span className="chip-content">
+                  <span className="chip-name">{loc.name}</span>
+                  <span className="chip-context">{formatRoomLocation(loc, locationData)}</span>
+                </span>
+              ) : (
+                loc.name
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="chips">
-        {sortedLocations.slice(0, 20).map((loc) => (
-          <button
-            key={loc.id}
-            className={`chip ${goal === loc.id ? "active" : ""} ${loc.type === 'indoor' ? 'indoor-chip' : ''}`}
-            onClick={() => setGoal(loc.id)}
-          >
-            {loc.type === 'indoor' ? (
-              <span className="chip-content">
-                <span className="chip-name">{loc.name}</span>
-                <span className="chip-context">{formatRoomLocation(loc, locationData)}</span>
-              </span>
-            ) : (
-              loc.name
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div 
-        className="map-scroll-wrapper" 
-        style={{ height: `${mapHeight}px`, flex: 'none', position: 'relative', overflow: 'hidden' }}
-      >
+      {/* SCROLLABLE CONTENT SECTION */}
+      <div className="scrollable-content-wrapper">
+        <div 
+          className="map-scroll-wrapper" 
+          style={{ height: `${mapHeight}px`, flex: 'none', position: 'relative', overflow: 'hidden' }}
+        >
         <div id="map-container-MapPage" ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}></div>
         <button className="start-btn" onClick={handleStart}>
           START ➤
         </button>
 
-        {/* Custom Map Controls */}
+        {/* Professional Map Controls */}
         {map && (
           <div className="map-overlay-controls" style={{ top: '16px' }}>
-            <button className="map-overlay-btn" onClick={() => map.zoomIn()} title="Zoom In">
-              <FaPlus />
-            </button>
-            <button className="map-overlay-btn" onClick={() => map.zoomOut()} title="Zoom Out">
-              <FaMinus />
-            </button>
+            {/* Zoom In Button */}
             <button 
-              className={`map-overlay-btn ${isAutoFollow ? 'active' : ''}`} 
-              onClick={recenter} 
-              title="Follow Me"
+              className="map-overlay-btn zoom-in-btn" 
+              onClick={() => map.zoomIn()} 
+              title="Zoom In"
+              aria-label="Zoom in on map"
+              aria-pressed="false"
             >
-              <FaLocationArrow />
+              <FaPlus className="map-icon" />
+              <span className="icon-tooltip">Zoom In</span>
             </button>
+
+            {/* Zoom Out Button */}
             <button 
-              className="map-overlay-btn" 
+              className="map-overlay-btn zoom-out-btn" 
+              onClick={() => map.zoomOut()} 
+              title="Zoom Out"
+              aria-label="Zoom out on map"
+              aria-pressed="false"
+            >
+              <FaMinus className="map-icon" />
+              <span className="icon-tooltip">Zoom Out</span>
+            </button>
+
+            {/* Follow/Recenter Button */}
+            <button 
+              className={`map-overlay-btn recenter-btn ${isAutoFollow ? 'active' : ''}`} 
+              onClick={recenter} 
+              title="Recenter on your location"
+              aria-label="Recenter on your current location"
+              aria-pressed={isAutoFollow}
+            >
+              <FaLocationArrow className="map-icon" />
+              <span className="icon-tooltip">{isAutoFollow ? 'Following' : 'Locate'}</span>
+            </button>
+
+            {/* Compass/North Up Button */}
+            <button 
+              className="map-overlay-btn compass-btn" 
               onClick={resetNorth} 
-              title="North Up"
+              title="Rotate map to north"
+              aria-label="Rotate map to face north"
+              aria-pressed="false"
             >
               <FaCompass 
-                className="compass-icon-rotate" 
-                style={{ transform: `rotate(${-((heading || 0))}deg)` }} 
+                className="map-icon compass-icon-rotate" 
+                style={{ transform: `rotate(${-(mapBearing || 0)}deg)` }} 
               />
+              <span className="icon-tooltip">North Up</span>
             </button>
           </div>
-        )}
-
-        {/* Floating Recenter Button */}
-        {map && !isAutoFollow && userLocation && (
-          <button className="recenter-nav-btn" onClick={recenter}>
-            <FaLocationArrow /> Recenter Navigation
-          </button>
         )}
 
         {/* Device Orientation Permission Request Prompt */}
@@ -670,6 +695,9 @@ export default function MapPage() {
           ))}
         </div>
       </div>
+      </div>
+
+      {/* FIXED BOTTOM NAV */}
 
       <nav className="bottom-nav">
         <div

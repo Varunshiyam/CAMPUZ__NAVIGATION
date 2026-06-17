@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import './ExplorePage.css';
 import { nodes, locationData } from './data';
 import { useMap } from "./components/MapProvider";
-import { useCompassHeading } from './hooks/useCompassHeading';
 import { FaHome, FaBuilding, FaThLarge, FaCompass, FaTimes, FaDirections } from 'react-icons/fa';
 
 const ExplorePage = () => {
@@ -19,17 +18,6 @@ const ExplorePage = () => {
 
     const [selectedBuilding, setSelectedBuilding] = useState(null);
     const loading = !isInitialized;
-
-    // Compass heading for directional arrow
-    const { heading, permissionStatus, requestPermission } = useCompassHeading();
-
-    /* ---------- REQUEST COMPASS PERMISSION ---------- */
-    useEffect(() => {
-        if (permissionStatus === 'prompt') {
-            requestPermission();
-        }
-    }, [permissionStatus, requestPermission]);
-
 
     /* ---------- GET CUSTOM ICON FOR LOCATION ---------- */
     const getCustomIcon = () => {
@@ -242,23 +230,6 @@ const ExplorePage = () => {
             )}
 
             <div id="explore-map-container" ref={mapContainerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, zIndex: 0 }}></div>
-
-            {/* Directional Arrow - Always visible */}
-            {heading !== null && heading !== undefined && (
-                <div 
-                    className="directional-arrow-container"
-                    style={{ 
-                        transform: `rotate(${-heading}deg)`,
-                        opacity: permissionStatus === 'granted' ? 1 : 0.5
-                    }}
-                >
-                    <div className="directional-arrow-shaft">
-                        <div className="directional-arrow-head"></div>
-                        <div className="directional-arrow-body"></div>
-                    </div>
-                    <div className="directional-arrow-label">N</div>
-                </div>
-            )}
 
             {/* Exit Button - Hidden when sidebar is open */}
             {!selectedBuilding && (

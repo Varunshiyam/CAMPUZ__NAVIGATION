@@ -167,7 +167,7 @@ const CampusMap = () => {
     return 0;
   }, [simulationActive, simulatedHeading, heading, activeLocation]);
 
-  const { isAutoFollow, recenter, resetNorth } = useMapAutoRotate(map, activeLocation, activeHeading, {
+  const { isAutoFollow, recenter, resetNorth, mapBearing } = useMapAutoRotate(map, activeLocation, activeHeading, {
     enabled: true,
     userMarker: userRef
   });
@@ -669,17 +669,10 @@ const CampusMap = () => {
             >
               <FaCompass 
                 className="compass-icon-rotate" 
-                style={{ transform: `rotate(${-((activeHeading || 0))}deg)` }} 
+                style={{ transform: `rotate(${-(mapBearing || 0)}deg)` }} 
               />
             </button>
           </div>
-        )}
-
-        {/* Floating Recenter Button */}
-        {map && !isAutoFollow && activeLocation && (
-          <button className="recenter-nav-btn" onClick={recenter}>
-            <FaLocationArrow /> Recenter Navigation
-          </button>
         )}
 
         {/* Device Orientation Permission Request Prompt */}
